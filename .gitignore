@@ -1,0 +1,10 @@
+DerivedData
+CMakeScripts
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+CMakeLists.txt.user
+build*/
+Debug/
+*.sublime*
+*.log
