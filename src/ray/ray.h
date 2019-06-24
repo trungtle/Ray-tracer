@@ -11,17 +11,16 @@ public:
 	Ray(const vec3 o, const vec3 d) :
 		origin(o), direction(d)
 	{
-		normalizedDirection = normalize(direction);
+		direction = normalize(direction);
 	}
 
-	vec3 PointAt(float t)
+	vec3 PointAt(float t) const
 	{
 		return origin + t * direction;
 	}
 
 	vec3 origin;
 	vec3 direction;
-	vec3 normalizedDirection;
 };
 
 #endif

@@ -1,55 +1,67 @@
 #include <iostream>
 #include <fstream>
 #include <glm/glm.hpp>
-#include "ray/ray.h"
+
+#include "camera/Camera.h"
+#include "intersection/Intersection.h"
+#include "screen/screen.h"
+#include "sampler/sampler.h"
 
 using namespace std;
 using namespace glm;
 
-vec3 lerp(float t, const vec3& fullT, const vec3& zeroT)
+Scene g_scene;
+
+vec3 Shade(const Ray& r)
 {
-	return (1.0f - t) * zeroT + t * fullT;
+	vec3 color;
+
+	Intersection intersect;
+	if (g_scene.Hit(r, 0, 10000.0f, intersect))
+	{
+		vec3 N = intersect.N;
+		color = 0.5f * vec3(N.x + 1, N.y + 1, N.z + 1);
+	}
+	else
+	{
+		color = Screen::Color(r);
+	}
+
+	return color;
 }
 
-struct Screen
-{
-	Screen(int w, int h) : width(w), height(h) {}
-
-	int width;
-	int height;
-
-	// Return screen color
-	static vec3 Color(const Ray& ray)
-	{
-		vec3 normR = ray.normalizedDirection;
-		float t = 0.5f * (normR.y + 1.0f);
-		return lerp(t, vec3(0.5f, 0.7f, 1.0f), vec3(1.0f, 1.0f, 1.0f));
-	}
-};
-
-void RenderTexture()
+void RenderFullscreen()
 {
 	ofstream file;
 	file.open("../images/image.ppm");	
 
-	Screen screen(200, 100);
+	// Screen
+	Screen screen(800, 600);
 	file << "P3\n" << screen.width << " " << screen.height << "\n255\n";
 
+	// Scene
+	g_scene.objects.push_back(new Sphere(vec3(0,0,-1), 0.5));
+	g_scene.objects.push_back(new Sphere(vec3(0,-100.5,-1), 100));
 
-	vec3 lowerLeft(-2, -1, -1);
-	vec3 horizontal(4, 0, 0);
-	vec3 vertical(0, 2, 0);
-	vec3 origin(0, 0, 0);
+	// Camera
+	Camera camera;
+	Sampler sampler;
+	sampler.numSamplesPerPixel = 100;
 
 	for (int y = screen.height - 1; y >= 0; y--)
 	{
 		for (int x = 0; x < screen.width; x++)
 		{
-			float u = float(x) / float(screen.width);
-			float v = float(y) / float(screen.height);
-			Ray r(origin, lowerLeft + u * horizontal + v * vertical);
+			vec3 color(0.0f, 0.0f, 0.0f);
+			for (int n = 0; n < sampler.numSamplesPerPixel; n++)
+			{
+				vec2 uv = sampler.RandomSampleFromPixel(screen, x, y);
+				Ray r = camera.GetRay(uv);
+				vec3 tempColor = Shade(r);
+				color += tempColor;
+			}
+			color /= float(sampler.numSamplesPerPixel);
 
-			vec3 color = Screen::Color(r);
 			int ir = int(color.r * 255.99);
 			int ig = int(color.g * 255.99);
 			int ib = int(color.b * 255.99);
@@ -63,6 +75,6 @@ void RenderTexture()
 
 int main()
 {
-	RenderTexture();
+	RenderFullscreen();
 	return 0;
 }
