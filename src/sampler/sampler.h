@@ -35,8 +35,8 @@ public:
 		do
 		{
 			p = vec3(Random01(), Random01(), Random01());
-			p = 2.0f * p - vec3(1, 1, 1); // Scale to -1 , 1 range
-		} while(glm::length2(p) > 1.0f);
+			p = 2.0f * p - vec3(1.0f, 1.0f, 1.0f); // Scale to -1 , 1 range
+		} while(glm::length2(p) >= 1.0f);
 
 		return p;
 	}

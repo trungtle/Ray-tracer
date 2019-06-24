@@ -19,8 +19,8 @@ vec3 Shade(const Ray& r)
 	Intersection intersect;
 	if (g_scene.Hit(r, 0, 10000.0f, intersect))
 	{
-		vec3 N = intersect.N;
-		color = 0.5f * vec3(N.x + 1, N.y + 1, N.z + 1);
+		vec3 newTarget = intersect.P + intersect.N + Sampler::RandomSampleInUnitSphere();
+		color = 0.5f * Shade(Ray(intersect.P, newTarget - intersect.P));
 	}
 	else
 	{
