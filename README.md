@@ -1,7 +1,6 @@
 # Ray tracer
-Ray tracing for the weekend
 
-Following the book ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) by [Peter Shirley](https://twitter.com/Peter_shirley)
+Referenced from ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) by [Peter Shirley](https://twitter.com/Peter_shirley).
 
 ![Render](images/image.png "Render")
 
