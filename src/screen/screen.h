@@ -2,6 +2,7 @@
 #define SCREEN_H
 
 #include "ray/ray.h"
+#include "utility.h"
 
 using namespace glm;
 using namespace std;
@@ -23,7 +24,7 @@ struct Screen
 
 		vec3 normR = ray.direction;
 		float t = 0.5f * (normR.y + 1.0f);
-		return lerp(t, white, skyblue);
+		return Tr::lerp(t, white, skyblue);
 	}
 
 	int width;

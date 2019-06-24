@@ -2,12 +2,19 @@
 #define RAY_H
 
 #include <glm/glm.hpp>
+#include <math.h>
 
 using namespace glm;
 
 class Ray
 {
 public:
+	Ray() :
+		origin(), direction()
+	{
+
+	}
+
 	Ray(const vec3 o, const vec3 d) :
 		origin(o), direction(d)
 	{

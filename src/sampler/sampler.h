@@ -19,14 +19,25 @@ public:
 		return distribution(generator);
 	}
 
-	vec2 RandomSampleFromPixel(Screen& screen, int x, int y)
+	static vec2 RandomSampleFromPixel(int x, int y, int width, int height)
 	{
 		float ru = Random01();
 		float rv = Random01();
-		float u = float(x + ru) / float(screen.width);
-		float v = float(y + rv) / float(screen.height);
+		float u = float(x + ru) / float(width);
+		float v = float(y + rv) / float(height);
 		return vec2(u, v);
 
+	}
+
+	static vec3 RandomSampleFromUnitDisk()
+	{
+		vec3 p;
+		do
+		{
+			p = 2.0f * vec3(Random01(), Random01(), 0) - vec3(1, 1, 0);
+		} while(dot(p, p) >= 1); // dot product with itself is squared length
+
+		return p;
 	}
 
 	static vec3 RandomSampleInUnitSphere()
@@ -41,7 +52,6 @@ public:
 		return p;
 	}
 
-	int numSamplesPerPixel;
 	static default_random_engine generator;
 	static uniform_real_distribution<double> distribution;
 

@@ -1,0 +1,142 @@
+#ifndef MATERIAL_H
+#define MATERIAL_H
+
+#include "ray/ray.h"
+#include "intersection/intersection.h"
+#include "sampler/sampler.h"
+
+using namespace glm;
+
+vec3 Reflect(const vec3& in, const vec3& normal)
+{
+	return in - 2 * dot(in, normal) * normal;
+}
+
+bool Refract(const vec3& in, const vec3& normal, float ni_over_nt, vec3& refracted)
+{
+	// Snell's law
+	vec3 uv = normalize(in);
+	float dt = dot(uv, normal);
+	float discriminant = 1.0 - ni_over_nt * ni_over_nt * (1.0f - dt * dt);
+	if (discriminant > 0)
+	{
+		refracted = ni_over_nt * (uv - normal * dt) - normal * glm::sqrt(discriminant);
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+// Approximate glass
+float Schlick(float cosine, float refIdx)
+{
+	float r0 = (1.0 - refIdx) / (1.0 + refIdx);
+	r0 = r0 * r0;
+	return r0 + (1.0f - r0) * pow((1.0 - cosine), 5);
+}
+
+class Material
+{
+public:
+	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay) const = 0;
+
+};
+
+class LambertianMaterial : public Material
+{
+public:
+	LambertianMaterial(const vec3& a) :
+		albedo(a)
+	{}
+
+	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay) const
+	{
+		// Scatter toward a random point inside a unit sphere tangent to the point of intersection.
+		vec3 newTarget = intersect.P + intersect.N + Sampler::RandomSampleInUnitSphere();
+		scatterRay = Ray(intersect.P, newTarget - intersect.P);
+		attenuation = albedo;
+		return true;
+	}
+
+	vec3 albedo;
+};
+
+class MetalMaterial : public Material
+{
+public:
+	MetalMaterial(const vec3& a, float f = 0) :
+		albedo(a), fuzz(f < 1 ? f : 1)
+	{		
+	}
+
+	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay) const
+	{
+		// scatter ray reflect around the surface normal of the intersection point.
+		vec3 reflected = Reflect(ray.direction, intersect.N);
+		scatterRay = Ray(intersect.P, reflected + Sampler::RandomSampleInUnitSphere() * fuzz);
+		attenuation = albedo;
+
+		// Make sure we're reflected away from the intersection
+		return dot(scatterRay.direction, intersect.N) > 0; 
+	}
+
+	vec3 albedo;
+	float fuzz;
+};
+
+class DielectricMaterial : public Material
+{
+public:
+	DielectricMaterial(float ri) :
+		refIdx(ri)
+	{		
+	}
+
+	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay) const
+	{
+		vec3 outwardNormal;
+		float ni_over_nt;
+		attenuation = vec3(1, 1, 1);
+		float cosine;
+		if (dot(ray.direction, intersect.N) > 0)
+		{
+			outwardNormal = -intersect.N;
+			ni_over_nt = refIdx;
+			cosine = refIdx * dot(ray.direction, intersect.N) / length(ray.direction);
+		}
+		else
+		{
+			outwardNormal = intersect.N;
+			ni_over_nt = 1.0f / refIdx;
+			cosine = -dot(ray.direction, intersect.N) / length(ray.direction);
+		}
+
+		float reflect_prob;
+		vec3 refracted;
+		if (Refract(ray.direction, outwardNormal, ni_over_nt, refracted))
+		{
+			reflect_prob = Schlick(cosine, refIdx);
+		}
+		else
+		{
+			reflect_prob = 1.0f;
+		}
+
+		if (Sampler::Random01() < reflect_prob)
+		{
+			vec3 reflected = Reflect(ray.direction, intersect.N);
+			scatterRay = Ray(intersect.P, reflected);
+		}
+		else
+		{
+			scatterRay = Ray(intersect.P, refracted);
+		}
+		return true;
+	}
+
+	float refIdx;
+};
+
+#endif
