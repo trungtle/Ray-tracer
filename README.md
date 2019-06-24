@@ -3,14 +3,14 @@ Ray tracing for the weekend
 
 Following the book ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) by [Peter Shirley](https://twitter.com/Peter_shirley)
 
-![Render](images/image.png?raw=true "Render")
+![Render](images/image.png "Render")
 
 ## Features
 - MSAA
 - Depth of field
 - TBB parallelization
 
-### Scene: 
+## Scene: 
 	Camera: 
 		Look from: -3, 0.3, 1.5
 		Look at: 0, 0, 0
@@ -22,13 +22,13 @@ Following the book ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com
 	7 materials
 
 
-### Stat
+## Stat
 
 For 800x600 image, with 100 samples / pixel:
 
-WITHOUT PARALLELIZATION
-Render 800x600 image took 88917 ms
+	_Without parallelization_
+		Render 800x600 image took 88917 ms
 
-WITH PARALLELIZATION
-Render  took 25803 ms
+	_With parallelization_
+		Render  took 25803 ms
 
