@@ -2,12 +2,13 @@
 
 Referenced from ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) by [Peter Shirley](https://twitter.com/Peter_shirley).
 
-![Render](images/image.png "Render")
+![Render](images/motion-blur.png "Render")
 
 ## Features
 - MSAA
 - Depth of field
 - TBB parallelization
+- Motion blur
 
 ## Scene: 
 	Camera: 
