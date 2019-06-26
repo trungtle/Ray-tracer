@@ -17,9 +17,9 @@ public:
 	}
 
 	// Normal at point on surface
-	vec3 N(const vec3& point) const
+	vec3 N(const vec3& point, float time) const
 	{
-		return (point - center) / radius;
+		return (point - GetCenterAtTime(time)) / radius;
 	}
 
 	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
@@ -31,7 +31,7 @@ public:
 		// Solve for this equation using quadratic formula
 		// t = -b +/- sqrt(b*b - 4*a*c) / 2 * a
 
-		vec3 oc = ray.origin - center;
+		vec3 oc = ray.origin - GetCenterAtTime(ray.time);
 		float a = dot(ray.direction, ray.direction);
 		float b = 2 * dot(ray.direction, oc);
 		float c = dot(oc, oc) - radiusSq;
@@ -45,7 +45,7 @@ public:
 			{
 				intersect.t = t;
 				intersect.P = ray.PointAt(t);
-				intersect.N = N(intersect.P);
+				intersect.N = N(intersect.P, ray.time);
 				intersect.hit = this;
 				return true;				
 			}
@@ -54,12 +54,24 @@ public:
 			{
 				intersect.t = t;
 				intersect.P = ray.PointAt(t);
-				intersect.N = N(intersect.P);
+				intersect.N = N(intersect.P, ray.time);
 				intersect.hit = this;
 				return true;				
 			}
 		}
 		return false;
+	}
+
+	vec3 GetCenterAtTime(float t) const
+	{
+		if (pMotion)
+		{
+			return (*pMotion)(t) + center;
+		}
+		else
+		{
+			return center;
+		}
 	}
 
 	vec3 center;

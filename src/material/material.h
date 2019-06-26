@@ -55,7 +55,7 @@ public:
 	{
 		// Scatter toward a random point inside a unit sphere tangent to the point of intersection.
 		vec3 newTarget = intersect.P + intersect.N + Sampler::RandomSampleInUnitSphere();
-		scatterRay = Ray(intersect.P, newTarget - intersect.P);
+		scatterRay = Ray(intersect.P, newTarget - intersect.P, ray.time);
 		attenuation = albedo;
 		return true;
 	}
@@ -75,7 +75,7 @@ public:
 	{
 		// scatter ray reflect around the surface normal of the intersection point.
 		vec3 reflected = Reflect(ray.direction, intersect.N);
-		scatterRay = Ray(intersect.P, reflected + Sampler::RandomSampleInUnitSphere() * fuzz);
+		scatterRay = Ray(intersect.P, reflected + Sampler::RandomSampleInUnitSphere() * fuzz, ray.time);
 		attenuation = albedo;
 
 		// Make sure we're reflected away from the intersection
@@ -127,11 +127,11 @@ public:
 		if (Sampler::Random01() < reflect_prob)
 		{
 			vec3 reflected = Reflect(ray.direction, intersect.N);
-			scatterRay = Ray(intersect.P, reflected);
+			scatterRay = Ray(intersect.P, reflected, ray.time);
 		}
 		else
 		{
-			scatterRay = Ray(intersect.P, refracted);
+			scatterRay = Ray(intersect.P, refracted, ray.time);
 		}
 		return true;
 	}

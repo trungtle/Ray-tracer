@@ -15,8 +15,8 @@ public:
 
 	}
 
-	Ray(const vec3 o, const vec3 d) :
-		origin(o), direction(d)
+	Ray(const vec3 o, const vec3 d, float t = 0) :
+		origin(o), direction(d), time(t)
 	{
 		direction = normalize(direction);
 	}
@@ -28,6 +28,7 @@ public:
 
 	vec3 origin;
 	vec3 direction;
+	float time;
 };
 
 #endif

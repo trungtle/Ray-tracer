@@ -7,6 +7,7 @@ namespace Tr
 	{
 		return (1.0f - t) * zeroT + t * fullT;
 	}
+
 };
 
 #endif

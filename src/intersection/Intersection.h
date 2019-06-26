@@ -2,6 +2,7 @@
 #define INTERSECTION_H
 
 #include <vector>
+#include "motion/motion.h"
 #include "ray/ray.h"
 
 using namespace glm;
@@ -23,6 +24,7 @@ public:
 	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const = 0;
 
 	int materialId;
+	Motion* pMotion = nullptr;
 };
 
 #endif

@@ -7,8 +7,15 @@
 class Camera
 {
 public:
-	Camera(const vec3& lookFrom, const vec3& lookAt, float vfov /*vertical fov*/, float aspect, float lR, float focusDist)
-		: origin(lookFrom), lensRadius(lR)
+	Camera(
+	const vec3& lookFrom, 
+	const vec3& lookAt, 
+	float vfov /*vertical fov*/, 
+	float aspect, 
+	float lR, 
+	float focusDist,
+	float tStart = 0, float tEnd = 0)
+		: origin(lookFrom), lensRadius(lR), timeStart(tStart), timeEnd(tEnd)
 	{
 		float theta = vfov * M_PI / 180.0f;
 		float halfHeight = tan(theta / 2.0f);
@@ -29,7 +36,8 @@ public:
 	{
 		vec3 rp = lensRadius * Sampler::RandomSampleFromUnitDisk();
 		vec3 offset = right * rp.x + up * rp.y;
-		Ray r(origin + offset, lowerLeft + uv.x * horizontal + uv.y * vertical - origin - offset);
+		float time = timeStart + Sampler::Random01() * (timeEnd - timeStart);
+		Ray r(origin + offset, lowerLeft + uv.x * horizontal + uv.y * vertical - origin - offset, time);
 		return r;
 	}
 
@@ -42,6 +50,8 @@ private:
 	vec3 forward;
 	vec3 right;
 	float lensRadius;
+	float timeStart;
+	float timeEnd;
 
 };
 
