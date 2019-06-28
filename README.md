@@ -2,8 +2,9 @@
 
 Referenced from ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) by [Peter Shirley](https://twitter.com/Peter_shirley).
 
-![Render](images/motion-blur.png "Motion blur")
-![Render](images/image.png "Render")
+## Install
+- Configure and generate makefile from CMakeLists.txt ([Tutorial](https://cmake.org/cmake-tutorial/))
+- run "install.sh"
 
 ## Features
 - MSAA
@@ -13,6 +14,9 @@ Referenced from ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) 
 - BVH Acceleration structure
 
 ## Scene: 
+
+![Render](images/motion-blur.png "Motion blur")
+
 	Camera: 
 		Look from: -3, 0.3, 1.5
 		Look at: 0, 0, 0

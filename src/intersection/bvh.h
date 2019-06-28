@@ -37,13 +37,13 @@ public:
 			{
 				AABB boxFirst;
 				AABB boxSecond;
-#if DEBUG
 				if (!first->BoundingBox(boxFirst) || !second->BoundingBox(boxSecond))
 				{
+#if DEBUG
 					cerr << "No bounding box for this bvh node" << endl;
 					cerr << first->name << ", " << second->name << endl;
-				}
 #endif				
+				}
 				return boxFirst._min[axis] < boxSecond._min[axis];
 			});
 
@@ -69,12 +69,12 @@ public:
 		}
 
 		AABB boxLeft, boxRight;
-#if DEBUG		
 		if (!left->BoundingBox(boxLeft) || !right->BoundingBox(boxRight))
 		{
+#if DEBUG		
 			cerr << "No bounding box in BVH constructor" << endl;
-		}
 #endif		
+		}
 		aabb = AABB::Combine(boxLeft, boxRight);
 	}
 
