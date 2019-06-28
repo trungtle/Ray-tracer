@@ -12,10 +12,11 @@ Referenced from ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) 
 - TBB parallelization
 - Motion blur
 - BVH Acceleration structure
+- Solid texture
 
 ## Scene: 
 
-![Render](images/motion-blur.png "Motion blur")
+![Render](images/checker_texture.png "Render")
 
 	Camera: 
 		Look from: -3, 0.3, 1.5

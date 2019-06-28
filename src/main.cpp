@@ -241,11 +241,11 @@ void InitSceneRandomBalls()
 	g_settings.focusDist = length(g_settings.lookAt - g_settings.lookFrom);
 
 	// Scene
-	g_scene.materials.emplace_back(new LambertianMaterial(vec3(0.2, 0.3, 0.7)));
-	g_scene.materials.emplace_back(new LambertianMaterial(vec3(0.7, 0.2, 0.2)));
-	g_scene.materials.emplace_back(new MetalMaterial(vec3(0.8, 0.6, 0.2), 0.3));
-	g_scene.materials.emplace_back(new MetalMaterial(vec3(0.8, 0.8, 0.8), 1.0));
-	g_scene.materials.emplace_back(new MetalMaterial(vec3(0.4, 0.6, 0.2), 1.0));
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.3, 0.7))));
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.2))));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.6, 0.2)), 0.3));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.8, 0.8)), 1.0));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.4, 0.6, 0.2)), 1.0));
 	g_scene.materials.emplace_back(new DielectricMaterial(2.5));
 	g_scene.materials.emplace_back(new DielectricMaterial(1.2));
 
@@ -285,15 +285,21 @@ void InitSceneMovingBalls()
 	g_settings.focusDist = length(g_settings.lookAt - g_settings.lookFrom);
 
 	// Scene
-	g_scene.materials.emplace_back(new LambertianMaterial(vec3(0.2, 0.3, 0.7)));
-	g_scene.materials.emplace_back(new LambertianMaterial(vec3(0.7, 0.2, 0.2)));
-	g_scene.materials.emplace_back(new MetalMaterial(vec3(0.8, 0.6, 0.2), 0));
-	g_scene.materials.emplace_back(new MetalMaterial(vec3(0.8, 0.8, 0.8), 0));
-	g_scene.materials.emplace_back(new LambertianMaterial(vec3(0.2, 0.8, 0.2)));
-	g_scene.materials.emplace_back(new MetalMaterial(vec3(0.8, 0.4, 0.6), 0.0));
-	g_scene.materials.emplace_back(new MetalMaterial(vec3(0.7, 0.2, 0.8)));
+	g_scene.materials.emplace_back(
+		new LambertianMaterial(
+			new CheckerTexture(
+				new ConstantTexture(vec3(0.2, 0.3, 0.7)), 
+				new ConstantTexture(vec3(0.8, 0.8, 0.8))
+			)
+		));
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.2))));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.6, 0.2)), 0));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.8, 0.8)), 0));
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.8, 0.2))));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.4, 0.6)), 0.0));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.8))));
 	g_scene.materials.emplace_back(new DielectricMaterial(1.2));
-	g_scene.materials.emplace_back(new MetalMaterial(vec3(0.2, 0.8, 0.2), 0.2));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.2, 0.8, 0.2)), 0.2));
 
 
 	// Ground

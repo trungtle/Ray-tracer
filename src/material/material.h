@@ -4,6 +4,7 @@
 #include "ray/ray.h"
 #include "intersection/intersection.h"
 #include "sampler/sampler.h"
+#include "texture/texture.h"
 
 using namespace glm;
 
@@ -42,33 +43,34 @@ class Material
 public:
 	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay) const = 0;
 
+	Texture* texture;
 };
 
 class LambertianMaterial : public Material
 {
 public:
-	LambertianMaterial(const vec3& a) :
-		albedo(a)
-	{}
+	LambertianMaterial(Texture* t)
+	{
+		texture = t;
+	}
 
 	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay) const
 	{
 		// Scatter toward a random point inside a unit sphere tangent to the point of intersection.
 		vec3 newTarget = intersect.P + intersect.N + Sampler::RandomSampleInUnitSphere();
 		scatterRay = Ray(intersect.P, newTarget - intersect.P, ray.time);
-		attenuation = albedo;
+		attenuation = texture->value(vec2(0,0), intersect.P);
 		return true;
 	}
-
-	vec3 albedo;
 };
 
 class MetalMaterial : public Material
 {
 public:
-	MetalMaterial(const vec3& a, float f = 0) :
-		albedo(a), fuzz(f < 1 ? f : 1)
+	MetalMaterial(Texture* t, float f = 0) :
+		fuzz(f < 1 ? f : 1)
 	{		
+		texture = t;
 	}
 
 	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay) const
@@ -76,13 +78,12 @@ public:
 		// scatter ray reflect around the surface normal of the intersection point.
 		vec3 reflected = Reflect(ray.direction, intersect.N);
 		scatterRay = Ray(intersect.P, reflected + Sampler::RandomSampleInUnitSphere() * fuzz, ray.time);
-		attenuation = albedo;
+		attenuation = texture->value(vec2(0, 0), intersect.P);
 
 		// Make sure we're reflected away from the intersection
 		return dot(scatterRay.direction, intersect.N) > 0; 
 	}
 
-	vec3 albedo;
 	float fuzz;
 };
 

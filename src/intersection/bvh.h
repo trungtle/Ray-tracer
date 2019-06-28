@@ -21,6 +21,8 @@ public:
 
 	BVHNode(vector<Hitable*>& objects, int start, int end)
 	{
+		// Subdivide nodes across random axis. Other strategy is to use the
+		// surface area heuristics.
 		int axis = int(Sampler::Random01() * 3);
 		int count = end - start;
 		int half = start + count / 2;
@@ -47,6 +49,7 @@ public:
 				return boxFirst._min[axis] < boxSecond._min[axis];
 			});
 
+		// Only one object, assign to both leaves so don't have empty leaves.
 		if (count == 1)
 		{
 			left = right = objects[start];
