@@ -19,7 +19,6 @@ public:
 		return m_start + ((t - timeStart)/(timeEnd - timeStart)) * (m_end - m_start);
 	}
 
-private:
 	vec3 m_start;
 	vec3 m_end;
 	float timeStart;

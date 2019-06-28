@@ -1,7 +1,10 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
+#include "intersection/AABB.h"
 #include "intersection/Intersection.h"
+
+#define DEBUG 1
 
 using namespace glm;
 using namespace std;
@@ -14,6 +17,9 @@ public:
 	{
 		materialId = m;
 		radiusSq = radius * radius;
+#if DEBUG		
+		name = "sphere";
+#endif
 	}
 
 	// Normal at point on surface
@@ -62,6 +68,12 @@ public:
 		return false;
 	}
 
+	virtual bool BoundingBox(AABB& aabb) const
+	{
+		aabb = 	AABB(GetMinCenter() - vec3(radius), GetMaxCenter() + vec3(radius));
+		return true;
+	}
+
 	vec3 GetCenterAtTime(float t) const
 	{
 		if (pMotion)
@@ -72,6 +84,30 @@ public:
 		{
 			return center;
 		}
+	}
+
+	vec3 GetMaxCenter() const
+	{
+		if (pMotion)
+		{
+			return glm::max(pMotion->m_start, pMotion->m_end) + center;
+		}
+		else
+		{
+			return center;
+		}
+	}
+
+	vec3 GetMinCenter() const
+	{
+		if (pMotion)
+		{
+			return glm::min(pMotion->m_start, pMotion->m_end) + center;
+		}
+		else
+		{
+			return center;
+		}		
 	}
 
 	vec3 center;

@@ -10,6 +10,7 @@ Referenced from ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) 
 - Depth of field
 - TBB parallelization
 - Motion blur
+- BVH Acceleration structure
 
 ## Scene: 
 	Camera: 
@@ -23,13 +24,16 @@ Referenced from ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) 
 	7 materials
 
 
-## Stat
+## Performance
 
-For 800x600 image, with 100 samples / pixel:
+For 800x600 image, with 100 samples / pixel, 50 recursive depth:
 
-	_Without parallelization_
-		Render 800x600 image took 88917 ms
+	* Without parallelization
+		Render took 88 seconds
 
-	_With parallelization_
-		Render  took 25803 ms
+	* With parallelization
+		Render took 27 seconds
+
+	* With BVH acceleration
+		Render took 16 seconds
 

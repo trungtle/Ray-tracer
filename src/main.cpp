@@ -22,6 +22,7 @@ struct
 {
 	int nx = 800;
 	int ny = 600;
+	int raytracingDepth;
 	int numSamplesPerPixel;
 	vec3 lookFrom;
 	vec3 lookAt;
@@ -78,7 +79,7 @@ public:
 		size_t end = range.end();		
 		for (size_t i = range.begin(); i != end; i++)
 		{
-			sum += Shade(ray, 50);
+			sum += Shade(ray, g_settings.raytracingDepth);
 		}
 		_sumColor = sum;
 	}
@@ -116,7 +117,7 @@ void RenderFullscreen()
 	// Begin render
 #if PARALLEL
 
-	vec3 imageBuffer[g_settings.nx][g_settings.ny];
+	vec3 film[g_settings.nx][g_settings.ny];
 
 #if REPORT
 	auto start = chrono::steady_clock::now();
@@ -124,7 +125,7 @@ void RenderFullscreen()
 
 	int numSamplesPerPixel = g_settings.numSamplesPerPixel;
 	parallel_for(blocked_range2d<int>(0, g_screen->height, 0, g_screen->width),
-		[numSamplesPerPixel, &imageBuffer](blocked_range2d<int> range)
+		[numSamplesPerPixel, &film](blocked_range2d<int> range)
 		{
 			int rowEnd = range.rows().end();
 			for (int y = range.rows().begin(); y < rowEnd; y++)
@@ -139,7 +140,7 @@ void RenderFullscreen()
 
 					// Gamma correction
 					color = glm::sqrt(color);
-					imageBuffer[x][y] = color;
+					film[x][y] = color;
 
 				}
 			}
@@ -158,7 +159,7 @@ void RenderFullscreen()
 	{
 		for (int x = 0; x < g_screen->width; x++)
 		{
-			vec3 color = imageBuffer[x][y];
+			vec3 color = film[x][y];
 			int ir = int(color.r * 255.99);
 			int ig = int(color.g * 255.99);
 			int ib = int(color.b * 255.99);
@@ -230,6 +231,7 @@ void RenderFullscreen()
 
 void InitSceneRandomBalls()
 {
+	g_settings.raytracingDepth = 50;
 	g_settings.numSamplesPerPixel = 100;
 	g_settings.lookFrom = vec3(-3, 0.3, 1.5);
 	g_settings.lookAt = vec3(0, 0, 0);
@@ -273,6 +275,7 @@ void InitSceneRandomBalls()
 
 void InitSceneMovingBalls()
 {
+	g_settings.raytracingDepth = 50;
 	g_settings.numSamplesPerPixel = 100;
 	g_settings.lookFrom = vec3(0, 0, 3);
 	g_settings.lookAt = vec3(0, 0, 0);
@@ -346,6 +349,7 @@ int main()
 {
 	// InitSceneRandomBalls();
 	InitSceneMovingBalls();
+	g_scene.BuildAccelerationStructure();
 	RenderFullscreen();
 	return 0;
 }
