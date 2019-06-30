@@ -85,6 +85,7 @@ endif()
 # Add source files you want to compile (.cpp)
 set(CORE_SRC
         src/main.cpp
+        nuparu/src/stb_image/stb_image.c
 )
 
 add_executable(Raytracer ${CORE_SRC})

@@ -1,6 +1,7 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
+#include <math.h>
 #include "intersection/AABB.h"
 #include "intersection/Intersection.h"
 
@@ -20,12 +21,6 @@ public:
 #if DEBUG		
 		name = "sphere";
 #endif
-	}
-
-	// Normal at point on surface
-	vec3 N(const vec3& point, float time) const
-	{
-		return (point - GetCenterAtTime(time)) / radius;
 	}
 
 	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
@@ -52,6 +47,7 @@ public:
 				intersect.t = t;
 				intersect.P = ray.PointAt(t);
 				intersect.N = N(intersect.P, ray.time);
+				intersect.UV = UV(intersect.P);
 				intersect.hit = this;
 				return true;				
 			}
@@ -61,6 +57,7 @@ public:
 				intersect.t = t;
 				intersect.P = ray.PointAt(t);
 				intersect.N = N(intersect.P, ray.time);
+				intersect.UV = UV(intersect.P);
 				intersect.hit = this;
 				return true;				
 			}
@@ -72,6 +69,23 @@ public:
 	{
 		aabb = 	AABB(GetMinCenter() - vec3(radius), GetMaxCenter() + vec3(radius));
 		return true;
+	}
+
+	// Get UV for a unit sphere
+	vec2 UV(const vec3& point) const
+	{
+		vec2 uv;
+		float phi = atan2(point.z, point.x);
+		float theta = asin(point.y);
+		uv.x = 1 - (phi + M_PI) / (2.0f * M_PI);
+		uv.y = (theta + M_PI / 2.0f) / M_PI;
+		return uv;
+	}
+
+	// Normal at point on surface
+	vec3 N(const vec3& point, float time) const
+	{
+		return (point - GetCenterAtTime(time)) / radius;
 	}
 
 	vec3 GetCenterAtTime(float t) const

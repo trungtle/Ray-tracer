@@ -16,15 +16,24 @@ struct Screen
 {
 	Screen(int w, int h) : width(w), height(h) {}
 
-	// Return screen color
-	static vec3 Color(const Ray& ray)
+	static vec3 SkyColor(const Ray& ray)
 	{
-		const vec3 white(0.5f, 0.7f, 1.0f);
-		const vec3 skyblue(1.0f, 1.0f, 1.0f);
+		const vec3 skyblue(0.5f, 0.7f, 1.0f);
+		const vec3 white(1.0f, 1.0f, 1.0f);
 
 		vec3 normR = ray.direction;
 		float t = 0.5f * (normR.y + 1.0f);
-		return Tr::lerp(t, white, skyblue);
+		return Tr::lerp(t, skyblue, white);
+	}
+
+	static vec3 GalaxyColor(const Ray& ray)
+	{
+		const vec3 darksky(0.01f, 0.04f, 0.12f);
+		const vec3 black(0.0f, 0.0f, 0.0f);
+
+		vec3 normR = ray.direction;
+		float t = 0.5f * (normR.y + 1.0f);
+		return Tr::lerp(t, darksky, black);
 	}
 
 	int width;

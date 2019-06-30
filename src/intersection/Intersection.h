@@ -20,6 +20,7 @@ struct Intersection
 	float t;
 	vec3 P;
 	vec3 N;
+	vec2 UV;
 	const Hitable* hit;
 };
 

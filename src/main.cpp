@@ -7,6 +7,7 @@
 #include "camera/Camera.h"
 #include "intersection/scene.h"
 #include "intersection/sphere.h"
+#include "material/diffuse_light.h"
 #include "sampler/sampler.h"
 #include "screen/screen.h"
 #include "utility.h"
@@ -40,25 +41,26 @@ Screen* g_screen;
 vec3 Shade(const Ray& r, int depth)
 {
 	vec3 color;
-
 	Intersection intersect;
 	if (g_scene.Hit(r, 0.001, 10000.0f, intersect))
 	{
 		Ray scatterRay;
 		vec3 attenuation;
+		const Material* material = g_scene.materials[intersect.hit->materialId];
+		vec3 emitted = material->Emitted(intersect.UV, intersect.P);
 
-		if (depth >= 0 && g_scene.materials[intersect.hit->materialId]->Scatter(r, intersect, attenuation, scatterRay))
+		if (depth >= 0 && material->Scatter(r, intersect, attenuation, scatterRay))
 		{
-			color = 0.9f * attenuation * Shade(scatterRay, depth - 1);			
+			color = emitted + attenuation * Shade(scatterRay, depth - 1);		
 		}
 		else
 		{
-			color = vec3(0.0, 0, 0);
+			color = emitted;
 		}
 	}
 	else
 	{
-		color = Screen::Color(r);
+		color = Screen::GalaxyColor(r);
 	}
 
 	return color;
@@ -351,10 +353,86 @@ void InitSceneMovingBalls()
 	}
 }
 
+void InitUniverseScene()
+{
+	g_settings.raytracingDepth = 50;
+	g_settings.numSamplesPerPixel = 100;
+	g_settings.lookFrom = vec3(5, 0, 3);
+	g_settings.lookAt = vec3(0, 0, -1);
+	g_settings.vfov = 60;
+	g_settings.aspect = float(g_settings.nx) / float(g_settings.ny);
+	g_settings.aperture = 0.02f;
+	g_settings.focusDist = length(g_settings.lookAt - g_settings.lookFrom);
+
+	// Scene
+	g_scene.materials.emplace_back(
+		new LambertianMaterial(
+			new CheckerTexture(
+				new ConstantTexture(vec3(0.2, 0.3, 0.7)), 
+				new ConstantTexture(vec3(0.8, 0.8, 0.8))
+			)
+		));
+	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/earth.png")));
+
+	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/mars.png")));
+
+	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/mercury.png")));
+
+	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/jupiter.jpg")));
+
+	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/pluto.png")));
+
+	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(0.9f, 0.9f, 0.7f))));
+
+	// Ground
+	// g_scene.objects.emplace_back(new Sphere(vec3(0,-100.5,0), 100, 0));
+
+	float earthRadius = 0.45;
+	float mercuryRadius = earthRadius / 3.0f;
+	float plutoRadius = earthRadius / 6.0f;
+	float marsRadius = earthRadius * 1.5f;
+	float sunRadius = earthRadius * 100.0f;
+	float jupiterRadius = earthRadius * 9.f;
+
+	vec3 jupiterPosition(-1.6,0,-1);
+
+	// Sphere* pluto = new Sphere(vec3(0,-.05,-1), 0.45, 2);
+	Sphere* earth = new Sphere(vec3(0,0,-1), earthRadius, 1);
+	Sphere* mars = new Sphere(vec3(-1.6,0,-1), marsRadius, 2);
+	Sphere* mercury = new Sphere(vec3(1,0,-1), mercuryRadius, 3);
+	Sphere* jupiter = new Sphere(jupiterPosition, jupiterRadius, 4);
+	Sphere* sun = new Sphere(vec3(10 + sunRadius,0,-1), sunRadius, g_scene.materials.size() - 1);
+
+	// g_scene.objects.emplace_back(earth);
+	// g_scene.objects.emplace_back(mars);
+	// g_scene.objects.emplace_back(mercury);
+	g_scene.objects.emplace_back(jupiter);
+	g_scene.objects.emplace_back(sun);
+
+	// Jupiter ring
+	int n = 100;
+	float outerRadius = jupiterRadius * 2.0f;
+	float innerRadius = jupiterRadius * 1.5f; 
+	for (int i = 0; i < n; i++)
+	{
+		vec3 position;
+		float distToPosition;
+		do
+		{
+			position = Sampler::RandomSampleFromUnitDisk() * outerRadius;
+			distToPosition = glm::distance(jupiterPosition, position);
+		} while (distToPosition >= outerRadius || distToPosition <= innerRadius);
+
+		Sphere* aesteroid = new Sphere(position, 0.1f, 3);
+		g_scene.objects.emplace_back(aesteroid);
+	}
+}
+
 int main()
 {
 	// InitSceneRandomBalls();
-	InitSceneMovingBalls();
+	// InitSceneMovingBalls();
+	InitUniverseScene();
 	g_scene.BuildAccelerationStructure();
 	RenderFullscreen();
 	return 0;

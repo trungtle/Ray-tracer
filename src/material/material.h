@@ -42,7 +42,10 @@ class Material
 {
 public:
 	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay) const = 0;
-
+	virtual vec3 Emitted(const vec2& uv, const vec3& point) const
+	{
+		return vec3(0);
+	}
 	Texture* texture;
 };
 
@@ -59,7 +62,7 @@ public:
 		// Scatter toward a random point inside a unit sphere tangent to the point of intersection.
 		vec3 newTarget = intersect.P + intersect.N + Sampler::RandomSampleInUnitSphere();
 		scatterRay = Ray(intersect.P, newTarget - intersect.P, ray.time);
-		attenuation = texture->value(vec2(0,0), intersect.P);
+		attenuation = texture->value(intersect.UV, intersect.P);
 		return true;
 	}
 };
@@ -78,7 +81,7 @@ public:
 		// scatter ray reflect around the surface normal of the intersection point.
 		vec3 reflected = Reflect(ray.direction, intersect.N);
 		scatterRay = Ray(intersect.P, reflected + Sampler::RandomSampleInUnitSphere() * fuzz, ray.time);
-		attenuation = texture->value(vec2(0, 0), intersect.P);
+		attenuation = texture->value(intersect.UV, intersect.P);
 
 		// Make sure we're reflected away from the intersection
 		return dot(scatterRay.direction, intersect.N) > 0; 
