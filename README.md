@@ -20,7 +20,6 @@
 Render 800x800 image took 317120 ms
 	300 samples / pixel
 
-Scene: 
 	Camera: 
 		Look from: 0, 5, 16
 		Look at: 0, 5, -1
