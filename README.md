@@ -59,7 +59,7 @@ For 800x600 image, with 100 samples / pixel, 50 recursive depth:
 
 # Credit:
 - [Physically based rendering](http://www.pbr-book.org/) by Matt Pharr, Wenzel Jakob, and Greg Humphreys
-- Init code started from ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) by [Peter Shirley](https://twitter.com/Peter_shirley).
+- Initial code started from ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) by [Peter Shirley](https://twitter.com/Peter_shirley).
 - stb_image library: https://github.com/nothings/stb
 - tbb: https://www.threadingbuildingblocks.org/
 - Pluto texture: https://planet-texture-maps.fandom.com/wiki/Pluto
