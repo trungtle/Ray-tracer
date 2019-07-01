@@ -1,6 +1,7 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
+#include <iostream>
 #include "ray/ray.h"
 #include "intersection/intersection.h"
 #include "sampler/sampler.h"
@@ -63,6 +64,8 @@ public:
 		vec3 newTarget = intersect.P + intersect.N + Sampler::RandomSampleInUnitSphere();
 		scatterRay = Ray(intersect.P, newTarget - intersect.P, ray.time);
 		attenuation = texture->value(intersect.UV, intersect.P);
+		// cout << intersect.hit->name << endl;
+		// cout << "Color: " << attenuation.x << ", " << attenuation.y << ", " << attenuation.z << endl;
 		return true;
 	}
 };

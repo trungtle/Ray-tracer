@@ -5,6 +5,10 @@
 #include <tbb/tbb.h>
 
 #include "camera/Camera.h"
+#include "intersection/box.h"
+#include "intersection/cylinder.h"
+#include "intersection/hitable_transform.h"
+#include "intersection/rectangle.h"
 #include "intersection/scene.h"
 #include "intersection/sphere.h"
 #include "material/diffuse_light.h"
@@ -22,7 +26,7 @@ using namespace tbb;
 struct
 {
 	int nx = 800;
-	int ny = 600;
+	int ny = 800;
 	int raytracingDepth;
 	int numSamplesPerPixel;
 	vec3 lookFrom;
@@ -60,7 +64,7 @@ vec3 Shade(const Ray& r, int depth)
 	}
 	else
 	{
-		color = Screen::GalaxyColor(r);
+		color = Screen::SkyColor(r);
 	}
 
 	return color;
@@ -357,9 +361,9 @@ void InitUniverseScene()
 {
 	g_settings.raytracingDepth = 50;
 	g_settings.numSamplesPerPixel = 100;
-	g_settings.lookFrom = vec3(5, 0, 3);
+	g_settings.lookFrom = vec3(0, 0, 12);
 	g_settings.lookAt = vec3(0, 0, -1);
-	g_settings.vfov = 60;
+	g_settings.vfov = 40;
 	g_settings.aspect = float(g_settings.nx) / float(g_settings.ny);
 	g_settings.aperture = 0.02f;
 	g_settings.focusDist = length(g_settings.lookAt - g_settings.lookFrom);
@@ -373,66 +377,201 @@ void InitUniverseScene()
 			)
 		));
 	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/earth.png")));
-
 	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/mars.png")));
-
 	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/mercury.png")));
-
+	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/venus.jpg")));
 	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/jupiter.jpg")));
-
 	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/pluto.png")));
 
 	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(0.9f, 0.9f, 0.7f))));
 
-	// Ground
-	// g_scene.objects.emplace_back(new Sphere(vec3(0,-100.5,0), 100, 0));
-
 	float earthRadius = 0.45;
 	float mercuryRadius = earthRadius / 3.0f;
+	float venusRadius = earthRadius;
 	float plutoRadius = earthRadius / 6.0f;
 	float marsRadius = earthRadius * 1.5f;
 	float sunRadius = earthRadius * 100.0f;
 	float jupiterRadius = earthRadius * 9.f;
 
-	vec3 jupiterPosition(-1.6,0,-1);
+	vec3 jupiterPosition(-jupiterRadius - 4,0,-1);
 
 	// Sphere* pluto = new Sphere(vec3(0,-.05,-1), 0.45, 2);
-	Sphere* earth = new Sphere(vec3(0,0,-1), earthRadius, 1);
-	Sphere* mars = new Sphere(vec3(-1.6,0,-1), marsRadius, 2);
-	Sphere* mercury = new Sphere(vec3(1,0,-1), mercuryRadius, 3);
-	Sphere* jupiter = new Sphere(jupiterPosition, jupiterRadius, 4);
+	Sphere* jupiter = new Sphere(jupiterPosition, jupiterRadius, 5);
+	Sphere* mars = new Sphere(vec3(-1,0,-1), marsRadius, 2);
+	Sphere* earth = new Sphere(vec3(1,0,-1), earthRadius, 1);
+	Sphere* venus = new Sphere(vec3(2.6,0,-1), venusRadius, 4);
+	Sphere* mercury = new Sphere(vec3(4,0,-1), mercuryRadius, 3);
+
+	// Sun
 	Sphere* sun = new Sphere(vec3(10 + sunRadius,0,-1), sunRadius, g_scene.materials.size() - 1);
 
-	// g_scene.objects.emplace_back(earth);
-	// g_scene.objects.emplace_back(mars);
-	// g_scene.objects.emplace_back(mercury);
+	g_scene.objects.emplace_back(earth);
+	g_scene.objects.emplace_back(mars);
+	g_scene.objects.emplace_back(mercury);
+	g_scene.objects.emplace_back(venus);
 	g_scene.objects.emplace_back(jupiter);
 	g_scene.objects.emplace_back(sun);
 
-	// Jupiter ring
-	int n = 100;
-	float outerRadius = jupiterRadius * 2.0f;
-	float innerRadius = jupiterRadius * 1.5f; 
-	for (int i = 0; i < n; i++)
-	{
-		vec3 position;
-		float distToPosition;
-		do
-		{
-			position = Sampler::RandomSampleFromUnitDisk() * outerRadius;
-			distToPosition = glm::distance(jupiterPosition, position);
-		} while (distToPosition >= outerRadius || distToPosition <= innerRadius);
+}
 
-		Sphere* aesteroid = new Sphere(position, 0.1f, 3);
-		g_scene.objects.emplace_back(aesteroid);
+void InitCornellBox()
+{
+	g_settings.raytracingDepth = 50;
+	g_settings.numSamplesPerPixel = 300;
+	g_settings.lookFrom = vec3(0, 5, 16);
+	g_settings.lookAt = vec3(0, 5, -1);
+	g_settings.vfov = 50;
+	g_settings.aspect = float(g_settings.nx) / float(g_settings.ny);
+	g_settings.aperture = 0.0f;
+	g_settings.focusDist = length(g_settings.lookAt - g_settings.lookFrom);
+
+	// Scene
+	g_scene.materials.emplace_back(
+		new LambertianMaterial(
+			new CheckerTexture(
+				new ConstantTexture(vec3(0.2, 0.3, 0.7)), 
+				new ConstantTexture(vec3(0.8, 0.8, 0.8))
+			)
+		));
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(1, 1, 1)))); // white
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.2, 0.7)))); // blue
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.2)))); // red
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.7, 0.2)))); // green
+	g_scene.materials.emplace_back(new MetalMaterial(new ImageTexture("data/mars.png"), 0.2)); //5
+	g_scene.materials.emplace_back(new DielectricMaterial(1.2));//6
+	g_scene.materials.emplace_back(new MetalMaterial(new ImageTexture("data/mercury.png"), 0.2));//7
+	g_scene.materials.emplace_back(new MetalMaterial(new ImageTexture("data/venus.jpg"), 0.2));//8
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.7, 0.2)), 0.2));//9
+	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/jupiter.jpg"))); //10
+	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/pluto.png"))); //11
+
+
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.6, 0.2)), 0));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.8, 0.8)), 0));
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.8, 0.2))));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.4, 0.6)), 0.0));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.8))));
+	g_scene.materials.emplace_back(new DielectricMaterial(1.2));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.2, 0.8, 0.2)), 0.2));
+	
+	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(1.f, 1.f, 0.8f))));
+
+	// Room
+	float roomWidth = 5;
+	Hitable* roomFloor = new RectXZ(vec2(-roomWidth, -roomWidth), vec2(roomWidth, roomWidth), 0, 0);
+	Hitable* ceiling = new FlipNormal(new RectXZ(vec2(-roomWidth, -roomWidth), vec2(roomWidth, roomWidth), roomWidth * 2, 1));
+	Hitable* wallBack = new RectXY(vec2(-roomWidth, 0), vec2(roomWidth, roomWidth * 2), -roomWidth, 7);
+	Hitable* wallRight = new RectYZ(vec2(0, -roomWidth), vec2(roomWidth * 2, roomWidth), -roomWidth, 3);
+	Hitable* wallLeft = new FlipNormal(new RectYZ(vec2(0, -roomWidth), vec2(roomWidth * 2, roomWidth), roomWidth, 4));
+
+	// Platform
+	float platformHeight = 0.2f;
+	for (int i = 0; i < 1; i++)
+	{
+		Hitable* platform = new Box(
+			vec3(-roomWidth + 0.5f * (i + 1), platformHeight * i, -roomWidth + 0.5f * (i + 1)),
+			vec3(roomWidth - 0.5f * (i + 1), platformHeight * (i + 1), roomWidth - 0.5f * (i + 1)),
+			1);		
+		g_scene.objects.emplace_back(platform);
 	}
+
+	// 4 columns
+	float wallColumnsRadius = 0.5f;
+	float wallColumnHeight = 4;
+	Hitable* wallBackLeft = new Translate(
+		new Cylinder(wallColumnsRadius, 0, wallColumnHeight, 9), 
+		vec3(-roomWidth + 1.5f, 0, roomWidth - 1.5f));
+	g_scene.objects.emplace_back(wallBackLeft);
+
+	Hitable* wallBackRight = new Translate(
+		new Cylinder(wallColumnsRadius, 0, wallColumnHeight, 9), 
+		vec3(roomWidth - 1.5f, 0, roomWidth - 1.5f));
+	// g_scene.objects.emplace_back(wallBackRight);
+
+	// Boxes
+	float box1Height = 7.5;
+	Hitable* box1 = new Translate(new Box(vec3(-1, 0, -1.5), vec3(1, box1Height, 1.5), 5), vec3(2.7, 0, -0.2));
+
+	float box2Height = 2.5;
+	Hitable* box2 = new Translate(
+		new Box(vec3(-(box2Height/2), 0, -(box2Height/2)), vec3((box2Height/2), box2Height, (box2Height/2)), 8), 
+		vec3(-2, 0, 1.5));
+
+	// Spheres
+	float sphere2Radius = 1.0f;
+	Hitable* sphere2 = new Translate(
+		new Sphere(vec3(0, 0, 0), sphere2Radius, 6), 
+		vec3(-2, box2Height + sphere2Radius, 1.5));
+
+	float cylinder1Radius = 1.0f;
+	Hitable* cylinder1 = new Translate(
+		new Cylinder(cylinder1Radius, 0, 2, 10), 
+		vec3(1.7, 0, 3));
+
+	float cylinder2Radius = 1.0f;
+	Hitable* cylinder2 = new Translate(
+		new Cylinder(cylinder2Radius, 0, 5.7, 6), 
+		vec3(1.1, 0, 1));
+
+	// Light
+	// Hitable* ceilingLight = new FlpNormal(new RectXZ(vec2(-2, -2), vec2(2, 2), roomWidth * 2, g_scene.materials.size() - 1));
+	float lightRegionMargin = 1.0f;
+	float lightRegionHalfWidth = roomWidth - lightRegionMargin;
+	float lightRegionWidth = lightRegionHalfWidth * 2;
+	int numLightPerRow = 5;
+	float lightIntervalDist = lightRegionWidth / float(numLightPerRow - 1);
+	for (int w = 0; w < numLightPerRow; w++)
+	{
+		for (int h = 0; h < numLightPerRow; h++)
+		{
+			Hitable* ceilingLight = new FlipNormal(
+				new Disk(vec3(
+					-lightRegionHalfWidth + float(w) * lightIntervalDist, 
+					roomWidth * 2.0f, 
+					-lightRegionHalfWidth + float(h) * lightIntervalDist), 
+				0.3f, 
+				g_scene.materials.size() - 1));
+			g_scene.objects.emplace_back(ceilingLight);
+		}
+	}
+
+	g_scene.objects.emplace_back(roomFloor);
+	g_scene.objects.emplace_back(ceiling);
+	g_scene.objects.emplace_back(wallBack);
+	g_scene.objects.emplace_back(wallRight);
+	g_scene.objects.emplace_back(wallLeft);
+	g_scene.objects.emplace_back(box1);
+	g_scene.objects.emplace_back(box2);
+	g_scene.objects.emplace_back(cylinder1);
+	g_scene.objects.emplace_back(cylinder2);
+	g_scene.objects.emplace_back(sphere2);
+	
+
+
+	// Generate lots of random sphere
+	// int n = 100;
+	// float spawnRadius = roomWidth;
+	// float halfSpawnRadius = spawnRadius * 0.5f;
+	// float ground = platformHeight;
+	// for (int i = 0; i < n; i++)
+	// {
+	// 	int randomMaterialId = floor(Sampler::Random01() * float(g_scene.materials.size() - 1)) + 1;
+	// 	if (randomMaterialId > 0 && randomMaterialId < g_scene.materials.size())
+	// 	{
+	// 		float randomRadius = Sampler::Random01() * 0.6f;
+	// 		vec3 randomPosition = spawnRadius * vec3(Sampler::Random01(), 0, Sampler::Random01()) - vec3(halfSpawnRadius, 0, halfSpawnRadius);
+	// 		randomPosition.y = ground + randomRadius;
+	// 		g_scene.objects.emplace_back(new Sphere(randomPosition, randomRadius, randomMaterialId));
+	// 	}
+	// }
 }
 
 int main()
 {
 	// InitSceneRandomBalls();
 	// InitSceneMovingBalls();
-	InitUniverseScene();
+	// InitUniverseScene();
+	InitCornellBox();
 	g_scene.BuildAccelerationStructure();
 	RenderFullscreen();
 	return 0;

@@ -21,6 +21,11 @@ public:
 		direction = normalize(direction);
 	}
 
+	Ray GetCopyTransformed(const vec3& offset) const
+	{
+		return Ray(origin + offset, direction, time);
+	}
+
 	vec3 PointAt(float t) const
 	{
 		return origin + t * direction;

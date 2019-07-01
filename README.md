@@ -1,7 +1,5 @@
 # Ray tracer
 
-Referenced from ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) by [Peter Shirley](https://twitter.com/Peter_shirley).
-
 ## Install
 - Configure and generate makefile from CMakeLists.txt ([Tutorial](https://cmake.org/cmake-tutorial/))
 - run "install.sh"
@@ -13,6 +11,24 @@ Referenced from ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) 
 - Motion blur
 - BVH Acceleration structure
 - Solid texture
+- Direct lighting
+
+## Scene: 
+
+![Render](images/cornellbox_800.png "Cornell box")
+
+Render 800x800 image took 317120 ms
+	300 samples / pixel
+
+Scene: 
+	Camera: 
+		Look from: 0, 5, 16
+		Look at: 0, 5, -1
+		Aspect: 1
+		FOV: 50
+		Aperture: 0
+		Focus distance: 17
+	37 objects
 
 ## Scene: 
 
@@ -42,3 +58,12 @@ For 800x600 image, with 100 samples / pixel, 50 recursive depth:
 	* With BVH acceleration
 		Render took 16 seconds
 
+# Credit:
+- [Physically based rendering](http://www.pbr-book.org/) by Matt Pharr, Wenzel Jakob, and Greg Humphreys
+- Init code started from ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) by [Peter Shirley](https://twitter.com/Peter_shirley).
+- stb_image library: https://github.com/nothings/stb
+- tbb: https://www.threadingbuildingblocks.org/
+- Pluto texture: https://planet-texture-maps.fandom.com/wiki/Pluto
+- Mars texture: https://planet-texture-maps.fandom.com/wiki/Mars
+- Mercury texture: https://planet-texture-maps.fandom.com/wiki/Mercury
+- Venus, Saturn textures: https://www.solarsystemscope.com/textures/
