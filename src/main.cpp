@@ -471,7 +471,7 @@ void InitCornellBox()
 		Hitable* platform = new Box(
 			vec3(-roomWidth + 0.5f * (i + 1), platformHeight * i, -roomWidth + 0.5f * (i + 1)),
 			vec3(roomWidth - 0.5f * (i + 1), platformHeight * (i + 1), roomWidth - 0.5f * (i + 1)),
-			1);		
+			0);		
 		g_scene.objects.emplace_back(platform);
 	}
 
