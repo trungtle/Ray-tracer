@@ -25,6 +25,16 @@ public:
 		return hitable->BoundingBox(aabb);
 	}
 
+	virtual float PdfValue(const vec3& origin, const vec3& direction) const override
+	{
+		return hitable->PdfValue(origin, direction);
+	}
+
+	virtual vec3 Random(const vec3& origin) const override
+	{
+		return hitable->Random(origin);
+	}
+
 private:
 	Hitable* hitable;
 };
@@ -57,6 +67,15 @@ public:
 		}
 		return false;
 	}
+	virtual float PdfValue(const vec3& origin, const vec3& direction) const override
+	{
+		return hitable->PdfValue(origin, direction);
+	}
+
+	virtual vec3 Random(const vec3& origin) const override
+	{
+		return hitable->Random(origin);
+	}	
 
 private:
 	Hitable* hitable;
@@ -140,6 +159,16 @@ public:
 		aabb = bbox; 
 		return hasBox;
 	}	
+
+	virtual float PdfValue(const vec3& origin, const vec3& direction) const override
+	{
+		return hitable->PdfValue(origin, direction);
+	}
+
+	virtual vec3 Random(const vec3& origin) const override
+	{
+		return hitable->Random(origin);
+	}
 
 private:
 	Hitable* hitable;

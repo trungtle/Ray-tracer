@@ -67,6 +67,7 @@ public:
 	}
 
 	vector<Hitable*> objects;
+	vector<Hitable*> lights;
 	vector<Material*> materials;
 
 	BVHNode* root;

@@ -6,6 +6,7 @@
 #include "intersection/intersection.h"
 #include "sampler/sampler.h"
 #include "texture/texture.h"
+#include "transform/onb.h"
 
 using namespace glm;
 
@@ -42,10 +43,14 @@ float Schlick(float cosine, float refIdx)
 class Material
 {
 public:
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay) const = 0;
+	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay, float& pdf) const = 0;
 	virtual vec3 Emitted(const vec2& uv, const vec3& point) const
 	{
 		return vec3(0);
+	}
+	virtual float ScatteringPDF(const Ray& rayIn, const Intersection& isect, const Ray& rayScattered) const
+	{
+		return 0;
 	}
 	Texture* texture;
 };
@@ -58,15 +63,29 @@ public:
 		texture = t;
 	}
 
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay) const
+	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay, float& pdf) const override
 	{
 		// Scatter toward a random point inside a unit sphere tangent to the point of intersection.
-		vec3 newTarget = intersect.P + intersect.N + Sampler::RandomSampleInUnitSphere();
-		scatterRay = Ray(intersect.P, newTarget - intersect.P, ray.time);
+		// vec3 newTarget = intersect.P + intersect.N + Sampler::RandomSampleInUnitSphere();
+		// scatterRay = Ray(intersect.P, newTarget - intersect.P, ray.time);
+		// pdf = dot(intersect.N, scatterRay.direction) / M_PI;
+
+		// Scatter toward a cosine weighted direction
+		ONB uvw;
+		uvw.BuildFromW(intersect.N);
+		vec3 direction = uvw.Local(Sampler::RandomCosineDirection());
+		scatterRay = Ray(intersect.P, direction, ray.time);
+		pdf = dot(uvw.w(), scatterRay.direction) / M_PI;
+
 		attenuation = texture->value(intersect.UV, intersect.P);
-		// cout << intersect.hit->name << endl;
-		// cout << "Color: " << attenuation.x << ", " << attenuation.y << ", " << attenuation.z << endl;
 		return true;
+	}
+
+	virtual float ScatteringPDF(const Ray& rayIn, const Intersection& isect, const Ray& rayScattered) const override
+	{
+		float cosine = dot(isect.N, rayScattered.direction);
+		if (cosine < 0) cosine = 0;
+		return cosine / M_PI;
 	}
 };
 
@@ -79,7 +98,7 @@ public:
 		texture = t;
 	}
 
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay) const
+	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay, float& pdf) const
 	{
 		// scatter ray reflect around the surface normal of the intersection point.
 		vec3 reflected = Reflect(ray.direction, intersect.N);
@@ -101,7 +120,7 @@ public:
 	{		
 	}
 
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay) const
+	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay, float& pdf) const
 	{
 		vec3 outwardNormal;
 		float ni_over_nt;

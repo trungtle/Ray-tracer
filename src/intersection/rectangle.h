@@ -2,6 +2,7 @@
 #define RECTANGLE_H
 
 #include <glm/glm.hpp>
+#include <glm/gtx/norm.hpp>
 #include <iostream>
 
 #include "intersection/Intersection.h"
@@ -97,6 +98,31 @@ public:
 	{
 		aabb = AABB(vec3(_min.x, _y - 0.0001f, _min.y), vec3(_max.x, _y + 0.0001f, _max.y));
 		return true;
+	}
+
+	virtual float PdfValue(const vec3& origin, const vec3& direction) const override
+	{
+		Intersection isect;
+		if (this->Hit(Ray(origin, direction), 0, FLT_MAX, isect))
+		{
+			float area = (_max.x - _min.x) * (_max.y - _min.y);
+			float distSq = isect.t * isect.t * glm::length2(direction);
+			float cosine = fabs(dot(direction, isect.N) / glm::length(direction));
+			float result = distSq / (cosine * area);
+			return distSq / (cosine * area);
+		}
+		return 0;
+	}
+
+	virtual vec3 Random(const vec3& origin) const override
+	{
+		vec3 randomPoint(
+			_min.x + Sampler::Random01() * (_max.x - _min.x),
+			_y,
+			_min.y + Sampler::Random01() * (_max.y - _min.y)
+			);
+
+		return glm::normalize(randomPoint - origin);
 	}
 
 	vec3 N(const vec3& point) const

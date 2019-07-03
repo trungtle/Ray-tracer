@@ -52,6 +52,24 @@ public:
 		return p;
 	}
 
+	// Find a random direction, cosine weighted, with z axis as normal
+	// If we sample the variables with cosine weighted, then we can use
+	// our pdf as cos(theta) / pi
+	static vec3 RandomCosineDirection()
+	{
+		// Sampling with 2 variables over a cosine weighted direction
+		// r1 = Integral_0_phi(1 /(2 * PI)) -> phi = 2 * PI * r1
+		// r2 = Integral_0_theta(2 * PI * f(t) * sin(t)) with f(t) = cos(theta) / PI
+		// -> r2 = 1 - cos^2(theta) -> cos(theta) = sqrt(1 - r2)
+		float r1 = Sampler::Random01();
+		float r2 = Sampler::Random01();
+		float z = glm::sqrt(1.0f - r2); // this is cos(theta)
+		float phi = 2.0 * M_PI * r1;
+		float x = cos(phi) * 2 * glm::sqrt(r2);
+		float y = sin(phi) * 2 * glm::sqrt(r2);
+		return vec3(x, y, z);
+	}
+
 	static default_random_engine generator;
 	static uniform_real_distribution<double> distribution;
 

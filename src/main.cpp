@@ -12,6 +12,7 @@
 #include "intersection/scene.h"
 #include "intersection/sphere.h"
 #include "material/diffuse_light.h"
+#include "sampler/pdf.h"
 #include "sampler/sampler.h"
 #include "screen/screen.h"
 #include "utility.h"
@@ -53,9 +54,21 @@ vec3 Shade(const Ray& r, int depth)
 		const Material* material = g_scene.materials[intersect.hit->materialId];
 		vec3 emitted = material->Emitted(intersect.UV, intersect.P);
 
-		if (depth >= 0 && material->Scatter(r, intersect, attenuation, scatterRay))
+		float pdfVal = 1;
+		if (depth >= 0 && material->Scatter(r, intersect, attenuation, scatterRay, pdfVal))
 		{
-			color = emitted + attenuation * Shade(scatterRay, depth - 1);		
+			Hitable* light = g_scene.lights[0];
+			// HitablePDF pdfLight(light, intersect.P);
+			// CosinePDF pdfCosine(intersect.N);
+			// MixturePDF pdfMix(&pdfLight, &pdfCosine);
+			// HitablePDF pdfMix(light, intersect.P);
+			CosinePDF pdfMix(intersect.N);
+
+			scatterRay = Ray(intersect.P, pdfMix.Generate(), r.time);
+			pdfVal = pdfMix.Value(scatterRay.direction);
+
+			float scatteringPdf = material->ScatteringPDF(r, intersect, scatterRay);
+			color = emitted + attenuation * scatteringPdf * Shade(scatterRay, depth - 1) / pdfVal;		
 		}
 		else
 		{
@@ -87,7 +100,7 @@ public:
 		size_t end = range.end();		
 		for (size_t i = range.begin(); i != end; i++)
 		{
-			sum += Shade(ray, g_settings.raytracingDepth);
+			sum += Tr::deNaN(Shade(ray, g_settings.raytracingDepth));
 		}
 		_sumColor = sum;
 	}
@@ -552,8 +565,6 @@ void InitCornellBox()
 	g_scene.objects.emplace_back(cylinder1);
 	g_scene.objects.emplace_back(cylinder2);
 	g_scene.objects.emplace_back(sphere2);
-	
-
 
 	// Generate lots of random sphere
 	// int n = 100;
@@ -576,7 +587,7 @@ void InitCornellBox()
 void InitCornellBoxMCIntegration()
 {
 	g_settings.raytracingDepth = 50;
-	g_settings.numSamplesPerPixel = 10;
+	g_settings.numSamplesPerPixel = 500;
 	g_settings.lookFrom = vec3(0, 5, 14);
 	g_settings.lookAt = vec3(0, 5, -1);
 	g_settings.vfov = 60;
@@ -597,17 +608,17 @@ void InitCornellBoxMCIntegration()
 	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.2)))); // red
 	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.7, 0.2)))); // green
 
-	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(4.f, 4.f, 4.f))));
+	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(50.f, 50.f, 50.f))));
 
 	// Room
 	float roomWidth = 5;
 	float roomDepth = 15;
 	Hitable* roomFloor = new RectXZ(vec2(-roomWidth, -roomDepth), vec2(roomWidth, roomDepth), 0, 1);
-	Hitable* ceiling = new FlipNormal(new RectXZ(vec2(-roomWidth, -roomDepth), vec2(roomWidth, roomDepth), roomWidth * 2, 1));
-	Hitable* wallBack = new RectXY(vec2(-roomWidth, 0), vec2(roomWidth, roomWidth * 2), -roomWidth, 1);
+	Hitable* ceiling = new FlipNormal(new RectXZ(vec2(-roomWidth, -roomDepth), vec2(roomWidth, roomDepth), roomWidth * 2 - 0.001f, 1));
+	Hitable* wallBack = new RectXY(vec2(-roomWidth, 0), vec2(roomWidth, roomWidth * 2), -roomWidth + 0.001f, 1);
 	Hitable* wallFront = new FlipNormal(new RectXY(vec2(-roomWidth, 0), vec2(roomWidth, roomWidth * 2), roomDepth, 1));
-	Hitable* wallRight = new RectYZ(vec2(0, -roomDepth), vec2(roomWidth * 2, roomDepth), -roomWidth, 3);
-	Hitable* wallLeft = new FlipNormal(new RectYZ(vec2(0, -roomDepth), vec2(roomWidth * 2, roomDepth), roomWidth, 4));
+	Hitable* wallRight = new RectYZ(vec2(0, -roomDepth), vec2(roomWidth * 2, roomDepth), -roomWidth + 0.001f, 3);
+	Hitable* wallLeft = new FlipNormal(new RectYZ(vec2(0, -roomDepth), vec2(roomWidth * 2, roomDepth), roomWidth - 0.001f, 4));
 
 	g_scene.objects.emplace_back(roomFloor);
 	g_scene.objects.emplace_back(ceiling);
@@ -630,8 +641,9 @@ void InitCornellBoxMCIntegration()
 		vec3(-2, 0, 1.5));
 
 	// Light
-	Hitable* ceilingLight = new FlipNormal(new RectXZ(vec2(-2, -2), vec2(2, 2), roomWidth * 2, g_scene.materials.size() - 1));
+	Hitable* ceilingLight = new FlipNormal(new RectXZ(vec2(-3, -3), vec2(3, 3), roomWidth * 2 - 0.01f, g_scene.materials.size() - 1));
 	g_scene.objects.emplace_back(ceilingLight);
+	g_scene.lights.emplace_back(ceilingLight);
 
 	g_scene.objects.emplace_back(box1);
 	g_scene.objects.emplace_back(box2);

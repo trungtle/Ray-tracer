@@ -12,30 +12,13 @@
 - BVH Acceleration structure
 - Solid texture
 - Direct lighting
-
-## Scene: 
-
-![Render](images/cornellbox_800.png "Cornell box")
-
-Render 800x800 image took 317120 ms
-	300 samples / pixel
-
-	Camera: 
-		Look from: 0, 5, 16
-		Look at: 0, 5, -1
-		Aspect: 1
-		FOV: 50
-		Aperture: 0
-		Focus distance: 17
-	37 objects
+- Importance sampling
 
 ## Scene: 
 
 ![Render](images/checker_texture.png "Render")
 
 	Camera: 
-		Look from: -3, 0.3, 1.5
-		Look at: 0, 0, 0
 		Aspect: 1.33333
 		FOV: 40
 		Aperture: 0.02
@@ -56,6 +39,30 @@ For 800x600 image, with 100 samples / pixel, 50 recursive depth:
 
 	* With BVH acceleration
 		Render took 16 seconds
+
+## Scene: 
+
+Assortments of ray-objects intersection, with 2 different lighting scenarios:
+
+![Render](images/CornellBox1.png "Cornell box")
+![Render](images/cornellbox_800.png "Cornell box")
+
+# Importance sampling
+
+Rendered 800x800 image with 500 samples / pixel
+
+## Surface Cosine Weighted Sampling
+
+![Render](images/SamplingCosine_500sp.png "Cosine sampling")
+
+## Light Importance Sampling
+
+![Render](images/Sampling_Light_Only_500sp.png "Light only sampling")
+
+## Light + Surface Sampling
+
+![Render](images/Sampling_Mix_500sp.png "Mixed")
+
 
 # Credit:
 - [Physically based rendering](http://www.pbr-book.org/) by Matt Pharr, Wenzel Jakob, and Greg Humphreys

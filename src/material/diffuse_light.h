@@ -11,11 +11,11 @@ public:
 	{
 
 	}
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay) const
+	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay, float& pdf) const override
 	{
 		return false;
 	}
-	virtual vec3 Emitted(const vec2& uv, const vec3& point) const
+	virtual vec3 Emitted(const vec2& uv, const vec3& point) const override
 	{
 		return emit->value(uv, point);
 	}
