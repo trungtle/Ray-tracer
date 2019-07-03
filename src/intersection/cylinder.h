@@ -5,6 +5,7 @@
 #include "intersection/disk.h"
 #include "intersection/hitable_transform.h"
 #include "intersection/Intersection.h"
+#include "intersection/scene.h"
 #include "utility.h"
 
 using namespace glm;
@@ -17,26 +18,11 @@ public:
 		radius(r), yMin(yMi), yMax(yMa), radiusSquared(r * r)
 	{
 		materialId = mId;
-		top = new Disk(vec3(0, yMax, 0), r, mId);
-		bottom = new FlipNormal(new Disk(vec3(0, yMin, 0), r, mId));
+
 	}
 
 	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const override
 	{
-		float tTop = -1;
-		Intersection intersectTop;
-		if(top->Hit(ray, tmin, tmax, intersectTop))
-		{
-			tTop = intersectTop.t;
-		}
-
-		float tBottom = -1;
-		Intersection intersectBottom;
-		if(bottom->Hit(ray, tmin, tmax, intersectBottom))
-		{
-			tBottom = intersectBottom.t;
-		}
-
 		// Cylinder equation is x^2 + z^2 - r^2 = 0
 		// 
 		float a = ray.direction.x * ray.direction.x + ray.direction.z * ray.direction.z;
@@ -49,19 +35,6 @@ public:
 			float t = (-b - glm::sqrt(discriminant)) / (2.0f * a);
 			if (t > tmin && t < tmax)
 			{
-				if (tTop != -1 && tTop <= t && tTop < tBottom)
-				{
-					intersect = intersectTop;
-					intersect.hit = this;
-					return true;
-				}
-				if (tBottom != -1 && tBottom <= t && tBottom < tTop)
-				{
-					intersect = intersectTop;
-					intersect.hit = this;
-					return true;
-				}
-
 				vec3 hitPoint = ray.PointAt(t);
 				if (hitPoint.y >= yMin && hitPoint.y <= yMax)
 				{
@@ -77,19 +50,6 @@ public:
 			t = (-b + glm::sqrt(discriminant)) / (2.0f * a);
 			if (t > tmin && t < tmax)
 			{
-				if (tTop != -1 && tTop <= t && tTop < tBottom)
-				{
-					intersect = intersectTop;
-					intersect.hit = this;
-					return true;
-				}
-				if (tBottom != -1 && tBottom <= t && tBottom < tTop)
-				{
-					intersect = intersectTop;
-					intersect.hit = this;
-					return true;
-				}
-
 				vec3 hitPoint = ray.PointAt(t);
 				if (hitPoint.y >= yMin && hitPoint.y <= yMax)
 				{
@@ -102,26 +62,11 @@ public:
 					return true;				
 				}				
 			}
-		}
-		else
-		{
-			if (tTop != -1 && tTop < tBottom)
-			{
-				intersect = intersectTop;
-				intersect.hit = this;
-				return true;
-			}
-			if (tBottom != -1 && tBottom < tTop)
-			{
-				intersect = intersectTop;
-				intersect.hit = this;
-				return true;
-			}
 		}		
 		return false;
 	}
 
-	virtual bool BoundingBox(AABB& aabb) const
+	virtual bool BoundingBox(AABB& aabb) const override
 	{
 		aabb = AABB(vec3(-radius, yMin, -radius), vec3(radius, yMax, radius));
 		return true;
@@ -156,8 +101,44 @@ public:
 	float radius;
 	float yMin;
 	float yMax;
-	Hitable* top;
-	Hitable* bottom;
+};
+
+class CappedCylinder : public Hitable
+{
+public:
+	CappedCylinder(float r, float yMi, float yMa, int mId) :
+		radius(r), yMin(yMi), yMax(yMa)
+	{
+		materialId = mId;
+		
+		Hitable* top = new Disk(vec3(0, yMax, 0), r, mId);
+		Hitable* bottom = new FlipNormal(new Disk(vec3(0, yMin, 0), r, mId));
+		Hitable* cylinder = new Cylinder(r, yMi, yMa, mId);
+
+		scene = new Scene();
+		scene->objects.emplace_back(top);
+		scene->objects.emplace_back(bottom);
+		scene->objects.emplace_back(cylinder);
+		scene->BuildAccelerationStructure();
+
+		name = "CappedCylinder";
+	}
+
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
+	{
+		return scene->Hit(ray, tmin, tmax, intersect);
+	}
+
+	virtual bool BoundingBox(AABB& aabb) const override
+	{
+		aabb = AABB(vec3(-radius, yMin, -radius), vec3(radius, yMax, radius));
+		return true;
+	}
+
+	Scene* scene;
+	float radius;
+	float yMin;
+	float yMax;
 };
 
 #endif

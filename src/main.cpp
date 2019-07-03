@@ -67,6 +67,8 @@ vec3 Shade(const Ray& r, int depth)
 		color = Screen::SkyColor(r);
 	}
 
+	color = glm::clamp(color, vec3(0), vec3(1.0f));
+
 	return color;
 }
 
@@ -418,11 +420,11 @@ void InitCornellBox()
 {
 	g_settings.raytracingDepth = 50;
 	g_settings.numSamplesPerPixel = 300;
-	g_settings.lookFrom = vec3(0, 5, 16);
+	g_settings.lookFrom = vec3(0, 5, 14);
 	g_settings.lookAt = vec3(0, 5, -1);
-	g_settings.vfov = 50;
+	g_settings.vfov = 60;
 	g_settings.aspect = float(g_settings.nx) / float(g_settings.ny);
-	g_settings.aperture = 0.0f;
+	g_settings.aperture = 0.01f;
 	g_settings.focusDist = length(g_settings.lookAt - g_settings.lookFrom);
 
 	// Scene
@@ -446,23 +448,25 @@ void InitCornellBox()
 	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/pluto.png"))); //11
 
 
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.6, 0.2)), 0));
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.8, 0.8)), 0));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.6, 0.2)), 0));//12
+	g_scene.materials.emplace_back(new MetalMaterial(new ImageTexture("data/mercury.png"), 0.4));//13
 	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.8, 0.2))));
 	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.4, 0.6)), 0.0));
 	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.8))));
 	g_scene.materials.emplace_back(new DielectricMaterial(1.2));
 	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.2, 0.8, 0.2)), 0.2));
 	
-	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(1.f, 1.f, 0.8f))));
+	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(4.f, 4.f, 4.f))));
 
 	// Room
 	float roomWidth = 5;
-	Hitable* roomFloor = new RectXZ(vec2(-roomWidth, -roomWidth), vec2(roomWidth, roomWidth), 0, 0);
-	Hitable* ceiling = new FlipNormal(new RectXZ(vec2(-roomWidth, -roomWidth), vec2(roomWidth, roomWidth), roomWidth * 2, 1));
-	Hitable* wallBack = new RectXY(vec2(-roomWidth, 0), vec2(roomWidth, roomWidth * 2), -roomWidth, 7);
-	Hitable* wallRight = new RectYZ(vec2(0, -roomWidth), vec2(roomWidth * 2, roomWidth), -roomWidth, 3);
-	Hitable* wallLeft = new FlipNormal(new RectYZ(vec2(0, -roomWidth), vec2(roomWidth * 2, roomWidth), roomWidth, 4));
+	float roomDepth = 15;
+	Hitable* roomFloor = new RectXZ(vec2(-roomWidth, -roomDepth), vec2(roomWidth, roomDepth), 0, 0);
+	Hitable* ceiling = new FlipNormal(new RectXZ(vec2(-roomWidth, -roomDepth), vec2(roomWidth, roomDepth), roomWidth * 2, 1));
+	Hitable* wallBack = new RectXY(vec2(-roomWidth, 0), vec2(roomWidth, roomWidth * 2), -roomWidth, 13);
+	Hitable* wallFront = new FlipNormal(new RectXY(vec2(-roomWidth, 0), vec2(roomWidth, roomWidth * 2), roomDepth, 7));
+	Hitable* wallRight = new RectYZ(vec2(0, -roomDepth), vec2(roomWidth * 2, roomDepth), -roomWidth, 3);
+	Hitable* wallLeft = new FlipNormal(new RectYZ(vec2(0, -roomDepth), vec2(roomWidth * 2, roomDepth), roomWidth, 4));
 
 	// Platform
 	float platformHeight = 0.2f;
@@ -479,18 +483,18 @@ void InitCornellBox()
 	float wallColumnsRadius = 0.5f;
 	float wallColumnHeight = 4;
 	Hitable* wallBackLeft = new Translate(
-		new Cylinder(wallColumnsRadius, 0, wallColumnHeight, 9), 
+		new CappedCylinder(wallColumnsRadius, 0, wallColumnHeight, 10), 
 		vec3(-roomWidth + 1.5f, 0, roomWidth - 1.5f));
 	g_scene.objects.emplace_back(wallBackLeft);
 
 	Hitable* wallBackRight = new Translate(
-		new Cylinder(wallColumnsRadius, 0, wallColumnHeight, 9), 
+		new CappedCylinder(wallColumnsRadius, 0, wallColumnHeight, 9), 
 		vec3(roomWidth - 1.5f, 0, roomWidth - 1.5f));
 	// g_scene.objects.emplace_back(wallBackRight);
 
 	// Boxes
-	float box1Height = 7.5;
-	Hitable* box1 = new Translate(new Box(vec3(-1, 0, -1.5), vec3(1, box1Height, 1.5), 5), vec3(2.7, 0, -0.2));
+	float box1Height = 7;
+	Hitable* box1 = new Translate(new Box(vec3(-1, 0, -1.5), vec3(1, box1Height, 1.5), 5), vec3(2.4, 0, -2));
 
 	float box2Height = 2.5;
 	Hitable* box2 = new Translate(
@@ -503,18 +507,20 @@ void InitCornellBox()
 		new Sphere(vec3(0, 0, 0), sphere2Radius, 6), 
 		vec3(-2, box2Height + sphere2Radius, 1.5));
 
-	float cylinder1Radius = 1.0f;
+	float cylinder1Radius = 0.7f;
 	Hitable* cylinder1 = new Translate(
-		new Cylinder(cylinder1Radius, 0, 2, 10), 
-		vec3(1.7, 0, 3));
+		new CappedCylinder(cylinder1Radius, 0, 2, 9), 
+		vec3(2.5, 0, 3));
 
 	float cylinder2Radius = 1.0f;
 	Hitable* cylinder2 = new Translate(
-		new Cylinder(cylinder2Radius, 0, 5.7, 6), 
+		new CappedCylinder(cylinder2Radius, 0, 5.0f, 6), 
 		vec3(1.1, 0, 1));
 
 	// Light
-	// Hitable* ceilingLight = new FlpNormal(new RectXZ(vec2(-2, -2), vec2(2, 2), roomWidth * 2, g_scene.materials.size() - 1));
+	// Hitable* ceilingLight = new FlipNormal(new RectXZ(vec2(-4, -4), vec2(4, 4), roomWidth * 2, g_scene.materials.size() - 1));
+	// g_scene.objects.emplace_back(ceilingLight);
+
 	float lightRegionMargin = 1.0f;
 	float lightRegionHalfWidth = roomWidth - lightRegionMargin;
 	float lightRegionWidth = lightRegionHalfWidth * 2;
@@ -529,7 +535,7 @@ void InitCornellBox()
 					-lightRegionHalfWidth + float(w) * lightIntervalDist, 
 					roomWidth * 2.0f, 
 					-lightRegionHalfWidth + float(h) * lightIntervalDist), 
-				0.3f, 
+				0.8, 
 				g_scene.materials.size() - 1));
 			g_scene.objects.emplace_back(ceilingLight);
 		}
@@ -538,6 +544,7 @@ void InitCornellBox()
 	g_scene.objects.emplace_back(roomFloor);
 	g_scene.objects.emplace_back(ceiling);
 	g_scene.objects.emplace_back(wallBack);
+	g_scene.objects.emplace_back(wallFront);
 	g_scene.objects.emplace_back(wallRight);
 	g_scene.objects.emplace_back(wallLeft);
 	g_scene.objects.emplace_back(box1);
@@ -566,12 +573,78 @@ void InitCornellBox()
 	// }
 }
 
+void InitCornellBoxMCIntegration()
+{
+	g_settings.raytracingDepth = 50;
+	g_settings.numSamplesPerPixel = 10;
+	g_settings.lookFrom = vec3(0, 5, 14);
+	g_settings.lookAt = vec3(0, 5, -1);
+	g_settings.vfov = 60;
+	g_settings.aspect = float(g_settings.nx) / float(g_settings.ny);
+	g_settings.aperture = 0.01f;
+	g_settings.focusDist = length(g_settings.lookAt - g_settings.lookFrom);
+
+	// Scene
+	g_scene.materials.emplace_back(
+		new LambertianMaterial(
+			new CheckerTexture(
+				new ConstantTexture(vec3(0.2, 0.3, 0.7)), 
+				new ConstantTexture(vec3(0.8, 0.8, 0.8))
+			)
+		));
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(1, 1, 1)))); // white
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.2, 0.7)))); // blue
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.2)))); // red
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.7, 0.2)))); // green
+
+	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(4.f, 4.f, 4.f))));
+
+	// Room
+	float roomWidth = 5;
+	float roomDepth = 15;
+	Hitable* roomFloor = new RectXZ(vec2(-roomWidth, -roomDepth), vec2(roomWidth, roomDepth), 0, 1);
+	Hitable* ceiling = new FlipNormal(new RectXZ(vec2(-roomWidth, -roomDepth), vec2(roomWidth, roomDepth), roomWidth * 2, 1));
+	Hitable* wallBack = new RectXY(vec2(-roomWidth, 0), vec2(roomWidth, roomWidth * 2), -roomWidth, 1);
+	Hitable* wallFront = new FlipNormal(new RectXY(vec2(-roomWidth, 0), vec2(roomWidth, roomWidth * 2), roomDepth, 1));
+	Hitable* wallRight = new RectYZ(vec2(0, -roomDepth), vec2(roomWidth * 2, roomDepth), -roomWidth, 3);
+	Hitable* wallLeft = new FlipNormal(new RectYZ(vec2(0, -roomDepth), vec2(roomWidth * 2, roomDepth), roomWidth, 4));
+
+	g_scene.objects.emplace_back(roomFloor);
+	g_scene.objects.emplace_back(ceiling);
+	g_scene.objects.emplace_back(wallBack);
+	g_scene.objects.emplace_back(wallFront);
+	g_scene.objects.emplace_back(wallRight);
+	g_scene.objects.emplace_back(wallLeft);
+
+	// Boxes
+	float box1Height = 6;
+	Hitable* box1 = new Translate(new RotateY(
+		new Box(vec3(-1.5, 0, -1.2), vec3(1.5, box1Height, 1.2), 1), 
+		-30), // angle
+		vec3(2, 0, 0));
+
+	float box2Height = 2.5;
+	Hitable* box2 = new Translate(new RotateY(
+		new Box(vec3(-(box2Height/2), 0, -(box2Height/2)), vec3((box2Height/2), box2Height, (box2Height/2)), 1),
+		20), // angle 
+		vec3(-2, 0, 1.5));
+
+	// Light
+	Hitable* ceilingLight = new FlipNormal(new RectXZ(vec2(-2, -2), vec2(2, 2), roomWidth * 2, g_scene.materials.size() - 1));
+	g_scene.objects.emplace_back(ceilingLight);
+
+	g_scene.objects.emplace_back(box1);
+	g_scene.objects.emplace_back(box2);
+	
+}
+
 int main()
 {
 	// InitSceneRandomBalls();
 	// InitSceneMovingBalls();
 	// InitUniverseScene();
-	InitCornellBox();
+	// InitCornellBox();
+	InitCornellBoxMCIntegration();
 	g_scene.BuildAccelerationStructure();
 	RenderFullscreen();
 	return 0;

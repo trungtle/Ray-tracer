@@ -19,7 +19,7 @@ struct Screen
 	static vec3 SkyColor(const Ray& ray)
 	{
 		const vec3 skyblue(0.5f, 0.7f, 1.0f);
-		const vec3 skyorange(1.0f, 0.7f, 0.3f);
+		const vec3 skyorange(1.0f, 1.0f, 1.0f);
 
 		const vec3 white(1.0f, 1.0f, 1.0f);
 		const vec3 black(0.8f, 0.8f, 0.8f);
