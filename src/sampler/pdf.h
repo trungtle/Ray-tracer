@@ -18,6 +18,28 @@ public:
 
 };
 
+class UniformPDF : public PDF
+{
+public:
+	UniformPDF(const vec3& w)
+	{
+		uvw.BuildFromW(w);
+	}
+
+	virtual float Value(const vec3& direction) const override
+	{
+		return 1.0f / M_PI;
+
+	}
+
+	virtual vec3 Generate() const override
+	{
+		return uvw.Local(Sampler::RandomDirection());
+	}
+
+	ONB uvw;
+};
+
 class CosinePDF : public PDF
 {
 public:

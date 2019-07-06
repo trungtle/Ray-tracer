@@ -38,7 +38,7 @@ public:
 			a = vec3(1, 0, 0);
 		}
 		axis[1] = normalize(cross(w(), a));
-		axis[0] = normalize(cross(w(), v()));
+		axis[0] = cross(w(), v());
 	}
 
 

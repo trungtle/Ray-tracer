@@ -52,6 +52,14 @@ public:
 		return p;
 	}
 
+	// Find a random direction, with z axis as normal.
+	static vec3 RandomDirection()
+	{
+		// Pick a random point inside a unity sphere tangle to the xy plane.
+		vec3 randomDirection = vec3(0,0,1) + Sampler::RandomSampleInUnitSphere();
+		return randomDirection;
+	}
+
 	// Find a random direction, cosine weighted, with z axis as normal
 	// If we sample the variables with cosine weighted, then we can use
 	// our pdf as cos(theta) / pi
@@ -64,9 +72,11 @@ public:
 		float r1 = Sampler::Random01();
 		float r2 = Sampler::Random01();
 		float z = glm::sqrt(1.0f - r2); // this is cos(theta)
-		float phi = 2.0 * M_PI * r1;
-		float x = cos(phi) * 2 * glm::sqrt(r2);
-		float y = sin(phi) * 2 * glm::sqrt(r2);
+		float phi = 2.0f * M_PI * r1;
+		float x = cos(phi) * glm::sqrt(r2);
+		float y = sin(phi) * glm::sqrt(r2);
+
+
 		return vec3(x, y, z);
 	}
 

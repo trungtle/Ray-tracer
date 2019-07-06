@@ -54,15 +54,19 @@ vec3 Shade(const Ray& r, int depth)
 		const Material* material = g_scene.materials[intersect.hit->materialId];
 		vec3 emitted = material->Emitted(intersect.UV, intersect.P);
 
-		float pdfVal = 1;
+		float pdfVal = 0;
 		if (depth >= 0 && material->Scatter(r, intersect, attenuation, scatterRay, pdfVal))
 		{
 			Hitable* light = g_scene.lights[0];
-			// HitablePDF pdfLight(light, intersect.P);
-			// CosinePDF pdfCosine(intersect.N);
-			// MixturePDF pdfMix(&pdfLight, &pdfCosine);
+			HitablePDF pdfLight(light, intersect.P);
+			CosinePDF pdfCosine(intersect.N);
+			MixturePDF pdfMix(&pdfLight, &pdfCosine);
+			
+			// DEBUG
 			// HitablePDF pdfMix(light, intersect.P);
-			CosinePDF pdfMix(intersect.N);
+			// CosinePDF pdfMix(intersect.N);
+			// UniformPDF pdfMix(intersect.N);
+
 
 			scatterRay = Ray(intersect.P, pdfMix.Generate(), r.time);
 			pdfVal = pdfMix.Value(scatterRay.direction);
@@ -80,8 +84,7 @@ vec3 Shade(const Ray& r, int depth)
 		color = Screen::SkyColor(r);
 	}
 
-	color = glm::clamp(color, vec3(0), vec3(1.0f));
-
+	color = Tr::deNaN(color);
 	return color;
 }
 
@@ -100,7 +103,7 @@ public:
 		size_t end = range.end();		
 		for (size_t i = range.begin(); i != end; i++)
 		{
-			sum += Tr::deNaN(Shade(ray, g_settings.raytracingDepth));
+			sum += Shade(ray, g_settings.raytracingDepth);
 		}
 		_sumColor = sum;
 	}
@@ -588,9 +591,9 @@ void InitCornellBoxMCIntegration()
 {
 	g_settings.raytracingDepth = 50;
 	g_settings.numSamplesPerPixel = 500;
-	g_settings.lookFrom = vec3(0, 5, 14);
+	g_settings.lookFrom = vec3(0, 5, 14.9);
 	g_settings.lookAt = vec3(0, 5, -1);
-	g_settings.vfov = 60;
+	g_settings.vfov = 50;
 	g_settings.aspect = float(g_settings.nx) / float(g_settings.ny);
 	g_settings.aperture = 0.01f;
 	g_settings.focusDist = length(g_settings.lookAt - g_settings.lookFrom);
@@ -608,7 +611,7 @@ void InitCornellBoxMCIntegration()
 	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.2)))); // red
 	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.7, 0.2)))); // green
 
-	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(50.f, 50.f, 50.f))));
+	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(15.f, 15.f, 15.f))));
 
 	// Room
 	float roomWidth = 5;
@@ -641,7 +644,7 @@ void InitCornellBoxMCIntegration()
 		vec3(-2, 0, 1.5));
 
 	// Light
-	Hitable* ceilingLight = new FlipNormal(new RectXZ(vec2(-3, -3), vec2(3, 3), roomWidth * 2 - 0.01f, g_scene.materials.size() - 1));
+	Hitable* ceilingLight = new FlipNormal(new RectXZ(vec2(-1, -1), vec2(1, 1), roomWidth * 2 - 0.01f, g_scene.materials.size() - 1));
 	g_scene.objects.emplace_back(ceilingLight);
 	g_scene.lights.emplace_back(ceilingLight);
 
