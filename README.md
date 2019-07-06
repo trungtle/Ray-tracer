@@ -49,24 +49,7 @@ Assortments of ray-objects intersection, with 2 different lighting scenarios:
 
 # Importance sampling
 
-Rendered 800x800 image.
-
-## Surface Uniform Sampling
-
 ![Render](images/Sampling_Uniform_1000sp.png "Uniform sampling")
-
-## Surface Cosine Weighted Sampling
-
-![Render](images/SamplingCosine_500sp.png "Cosine sampling")
-
-## Light Importance Sampling
-
-![Render](images/Sampling_Light_Only_500sp.png "Light only sampling")
-
-## Light + Surface Sampling
-
-![Render](images/Sampling_Mix_500sp.png "Mixed")
-
 
 # Credit:
 - [Physically based rendering](http://www.pbr-book.org/) by Matt Pharr, Wenzel Jakob, and Greg Humphreys
