@@ -59,7 +59,8 @@ vec3 Shade(const Ray& r, int depth)
 		{
 			Hitable* light = g_scene.lights[0];
 			HitablePDF pdfLight(light, intersect.P);
-			CosinePDF pdfCosine(intersect.N);
+			// CosinePDF pdfCosine(intersect.N);
+			UniformPDF pdfCosine(intersect.N);
 			MixturePDF pdfMix(&pdfLight, &pdfCosine);
 			
 			// DEBUG
@@ -590,7 +591,7 @@ void InitCornellBox()
 void InitCornellBoxMCIntegration()
 {
 	g_settings.raytracingDepth = 50;
-	g_settings.numSamplesPerPixel = 500;
+	g_settings.numSamplesPerPixel = 1000;
 	g_settings.lookFrom = vec3(0, 5, 14.9);
 	g_settings.lookAt = vec3(0, 5, -1);
 	g_settings.vfov = 50;

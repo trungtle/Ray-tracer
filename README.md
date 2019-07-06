@@ -49,7 +49,11 @@ Assortments of ray-objects intersection, with 2 different lighting scenarios:
 
 # Importance sampling
 
-Rendered 800x800 image with 500 samples / pixel
+Rendered 800x800 image.
+
+## Surface Uniform Sampling
+
+![Render](images/Sampling_Uniform_1000sp.png "Uniform sampling")
 
 ## Surface Cosine Weighted Sampling
 
