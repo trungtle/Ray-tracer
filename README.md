@@ -49,7 +49,7 @@ Assortments of ray-objects intersection, with 2 different lighting scenarios:
 
 # Importance sampling
 
-![Render](images/Sampling_Uniform_1000sp.png "Uniform sampling")
+![Render](images/Sampling_Uniform_1000sp.jpg "Uniform sampling")
 
 # Credit:
 - [Physically based rendering](http://www.pbr-book.org/) by Matt Pharr, Wenzel Jakob, and Greg Humphreys
