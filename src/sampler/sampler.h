@@ -3,6 +3,7 @@
 
 #include <glm/gtx/norm.hpp>
 #include <random>
+#include "math/constants.h"
 #include "screen/screen.h"
 
 using namespace glm;
@@ -29,16 +30,44 @@ public:
 
 	}
 
-	static vec3 RandomSampleFromUnitDisk()
+	static vec2 RandomSampleFromUnitDisk()
 	{
-		vec3 p;
+		vec2 p;
 		do
 		{
-			p = 2.0f * vec3(Random01(), Random01(), 0) - vec3(1, 1, 0);
+			p = 2.0f * vec2(Random01(), Random01()) - vec2(1, 1);
 		} while(dot(p, p) >= 1); // dot product with itself is squared length
 
 		return p;
 	}
+
+	static vec2 RandomSampleFromConcentricUnitDisk()
+	{
+		float r1 = Random01();
+		float r2 = Random01();
+		r1 = 2.0 * r1 - 1.0f;
+		r2 = 2.0 * r2 - 1.0f; // mapped to -1, 1
+
+		// Degeneracy at origin
+		if (r1 == 0 && r2 == 0)
+		{
+			return vec2(0);
+		}
+
+		float theta, radius;
+		if (fabs(r1) > fabs(r2))
+		{
+			radius = r1;
+			theta = PI_OVER_4 * r2 / r1;
+		}
+		else
+		{
+			radius = r2;
+			theta = PI_OVER_2 - PI_OVER_4 * r1 / r2;
+		}
+		return radius * vec2(cos(theta), sin(theta));
+	}
+
 
 	static vec3 RandomSampleInUnitSphere()
 	{
@@ -69,15 +98,18 @@ public:
 		// r1 = Integral_0_phi(1 /(2 * PI)) -> phi = 2 * PI * r1
 		// r2 = Integral_0_theta(2 * PI * f(t) * sin(t)) with f(t) = cos(theta) / PI
 		// -> r2 = 1 - cos^2(theta) -> cos(theta) = sqrt(1 - r2)
-		float r1 = Sampler::Random01();
-		float r2 = Sampler::Random01();
-		float z = glm::sqrt(1.0f - r2); // this is cos(theta)
-		float phi = 2.0f * M_PI * r1;
-		float x = cos(phi) * glm::sqrt(r2);
-		float y = sin(phi) * glm::sqrt(r2);
+		// float r1 = Sampler::Random01();
+		// float r2 = Sampler::Random01();
+		// float z = glm::sqrt(1.0f - r2); // this is cos(theta)
+		// float phi = 2.0f * M_PI * r1;
+		// float x = cos(phi) * glm::sqrt(r2);
+		// float y = sin(phi) * glm::sqrt(r2);
+		// return vec3(x, y, z);
 
-
-		return vec3(x, y, z);
+		// Malley's method: sample from concentric disk, then project upward
+		vec2 r = RandomSampleFromConcentricUnitDisk();
+		float z = glm::sqrt(std::max(0.0f, 1.0f - r.x * r.x - r.y * r.y));
+		return vec3(r.x, r.y, z);
 	}
 
 	static default_random_engine generator;

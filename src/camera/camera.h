@@ -34,7 +34,7 @@ public:
 
 	Ray GetRay(vec2 uv)
 	{
-		vec3 rp = lensRadius * Sampler::RandomSampleFromUnitDisk();
+		vec2 rp = lensRadius * Sampler::RandomSampleFromUnitDisk();
 		vec3 offset = right * rp.x + up * rp.y;
 		float time = timeStart + Sampler::Random01() * (timeEnd - timeStart);
 		Ray r(origin + offset, lowerLeft + uv.x * horizontal + uv.y * vertical - origin - offset, time);

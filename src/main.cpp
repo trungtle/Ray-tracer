@@ -11,6 +11,7 @@
 #include "intersection/rectangle.h"
 #include "intersection/scene.h"
 #include "intersection/sphere.h"
+#include "intersection/triangle.h"
 #include "material/diffuse_light.h"
 #include "sampler/pdf.h"
 #include "sampler/sampler.h"
@@ -26,8 +27,8 @@ using namespace tbb;
 
 struct
 {
-	int nx = 800;
-	int ny = 800;
+	int nx = 200;
+	int ny = 200;
 	int raytracingDepth;
 	int numSamplesPerPixel;
 	vec3 lookFrom;
@@ -50,35 +51,59 @@ vec3 Shade(const Ray& r, int depth)
 	if (g_scene.Hit(r, 0.001, 10000.0f, intersect))
 	{
 		Ray scatterRay;
-		vec3 attenuation;
 		const Material* material = g_scene.materials[intersect.hit->materialId];
 		vec3 emitted = material->Emitted(intersect.UV, intersect.P);
 
-		float pdfVal = 0;
-		if (depth >= 0 && material->Scatter(r, intersect, attenuation, scatterRay, pdfVal))
+		if (depth >= 0 && material->Scatter(r, intersect, scatterRay))
 		{
-			Hitable* light = g_scene.lights[0];
-			HitablePDF pdfLight(light, intersect.P);
-			// CosinePDF pdfCosine(intersect.N);
-			UniformPDF pdfCosine(intersect.N);
-			MixturePDF pdfMix(&pdfLight, &pdfCosine);
-			
-			// DEBUG
-			// HitablePDF pdfMix(light, intersect.P);
-			// CosinePDF pdfMix(intersect.N);
-			// UniformPDF pdfMix(intersect.N);
+			switch(material->type)
+			{
+				case Material::kDiffuse:
+				{
+					vec3 albedo = material->texture->value(intersect.UV, intersect.P);
+					Hitable* light = g_scene.lights[0];
+					// HitablePDF pdfLight(light, intersect.P);
+					// CosinePDF pdfCosine(intersect.N);
+					// UniformPDF pdfCosine(intersect.N);
+					// MixturePDF pdfMix(&pdfLight, &pdfCosine);
+					
+					// DEBUG
+					// HitablePDF pdfMix(light, intersect.P);
+					// CosinePDF pdfMix(intersect.N);
+					UniformPDF pdfMix(intersect.N);
 
 
-			scatterRay = Ray(intersect.P, pdfMix.Generate(), r.time);
-			pdfVal = pdfMix.Value(scatterRay.direction);
+					scatterRay = Ray(intersect.P, pdfMix.Generate(), r.time);
+					float pdfVal = pdfMix.Value(scatterRay.direction);
 
-			float scatteringPdf = material->ScatteringPDF(r, intersect, scatterRay);
-			color = emitted + attenuation * scatteringPdf * Shade(scatterRay, depth - 1) / pdfVal;		
+					float scatteringPdf = abs(dot(normalize(intersect.N), normalize(scatterRay.direction))) * INV_PI;
+					color = emitted + albedo * scatteringPdf * Shade(scatterRay, depth - 1) / pdfVal;		
+					break;
+				}
+				case Material::kMetal:
+				{
+					vec3 albedo = material->texture->value(intersect.UV, intersect.P);
+					color = emitted + albedo * Shade(scatterRay, depth - 1);		
+					break;
+				}
+				case Material::kDielectric:
+				{
+					vec3 albedo = vec3(1, 1, 1);
+					color = emitted + albedo * Shade(scatterRay, depth - 1);		
+					break;
+				}
+				case Material::kLight:
+				default:
+				{
+					color = emitted;
+					break;
+				}
+			}
 		}
 		else
 		{
 			color = emitted;
-		}
+		}				
 	}
 	else
 	{
@@ -591,7 +616,7 @@ void InitCornellBox()
 void InitCornellBoxMCIntegration()
 {
 	g_settings.raytracingDepth = 50;
-	g_settings.numSamplesPerPixel = 1000;
+	g_settings.numSamplesPerPixel = 200;
 	g_settings.lookFrom = vec3(0, 5, 14.9);
 	g_settings.lookAt = vec3(0, 5, -1);
 	g_settings.vfov = 50;
@@ -644,13 +669,16 @@ void InitCornellBoxMCIntegration()
 		20), // angle 
 		vec3(-2, 0, 1.5));
 
+	Hitable* triange = new Triangle(vec3(-1.5, 0, -1.5), vec3(1.5, 0, -1.5), vec3(0, 5, -1.5), 1);
+	g_scene.objects.emplace_back(triange);
+
 	// Light
 	Hitable* ceilingLight = new FlipNormal(new RectXZ(vec2(-1, -1), vec2(1, 1), roomWidth * 2 - 0.01f, g_scene.materials.size() - 1));
 	g_scene.objects.emplace_back(ceilingLight);
 	g_scene.lights.emplace_back(ceilingLight);
 
-	g_scene.objects.emplace_back(box1);
-	g_scene.objects.emplace_back(box2);
+	// g_scene.objects.emplace_back(box1);
+	// g_scene.objects.emplace_back(box2);
 	
 }
 

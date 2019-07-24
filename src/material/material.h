@@ -43,16 +43,22 @@ float Schlick(float cosine, float refIdx)
 class Material
 {
 public:
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay, float& pdf) const = 0;
+
+	enum EType
+	{
+		kDiffuse,
+		kMetal,
+		kDielectric,
+		kLight
+	};
+
+	virtual bool Scatter(const Ray& ray, const Intersection& intersect, Ray& scatterRay) const = 0;
 	virtual vec3 Emitted(const vec2& uv, const vec3& point) const
 	{
 		return vec3(0);
 	}
-	virtual float ScatteringPDF(const Ray& rayIn, const Intersection& isect, const Ray& rayScattered) const
-	{
-		return 0;
-	}
 	Texture* texture;
+	EType type;
 };
 
 class LambertianMaterial : public Material
@@ -61,9 +67,10 @@ public:
 	LambertianMaterial(Texture* t)
 	{
 		texture = t;
+		type = kDiffuse;
 	}
 
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay, float& pdf) const override
+	virtual bool Scatter(const Ray& ray, const Intersection& intersect, Ray& scatterRay) const override
 	{
 		// Scatter toward a random point inside a unit sphere tangent to the point of intersection.
 		// vec3 newTarget = intersect.P + intersect.N + Sampler::RandomSampleInUnitSphere();
@@ -71,21 +78,12 @@ public:
 		// pdf = dot(intersect.N, scatterRay.direction) / M_PI;
 
 		// Scatter toward a cosine weighted direction
-		ONB uvw;
-		uvw.BuildFromW(intersect.N);
-		vec3 direction = uvw.Local(Sampler::RandomCosineDirection());
-		scatterRay = Ray(intersect.P, direction, ray.time);
-		pdf = dot(uvw.w(), scatterRay.direction) / M_PI;
+		// ONB uvw;
+		// uvw.BuildFromW(intersect.N);
+		// vec3 direction = uvw.Local(Sampler::RandomCosineDirection());
+		// scatterRay = Ray(intersect.P, direction, ray.time);
 
-		attenuation = texture->value(intersect.UV, intersect.P);
 		return true;
-	}
-
-	virtual float ScatteringPDF(const Ray& rayIn, const Intersection& isect, const Ray& rayScattered) const override
-	{
-		float cosine = dot(isect.N, rayScattered.direction);
-		if (cosine < 0) cosine = 0;
-		return cosine / M_PI;
 	}
 };
 
@@ -96,14 +94,14 @@ public:
 		fuzz(f < 1 ? f : 1)
 	{		
 		texture = t;
+		type = kMetal;
 	}
 
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay, float& pdf) const
+	virtual bool Scatter(const Ray& ray, const Intersection& intersect, Ray& scatterRay) const
 	{
 		// scatter ray reflect around the surface normal of the intersection point.
 		vec3 reflected = Reflect(ray.direction, intersect.N);
 		scatterRay = Ray(intersect.P, reflected + Sampler::RandomSampleInUnitSphere() * fuzz, ray.time);
-		attenuation = texture->value(intersect.UV, intersect.P);
 
 		// Make sure we're reflected away from the intersection
 		return dot(scatterRay.direction, intersect.N) > 0; 
@@ -118,13 +116,13 @@ public:
 	DielectricMaterial(float ri) :
 		refIdx(ri)
 	{		
+		type = kDielectric;
 	}
 
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, vec3& attenuation, Ray& scatterRay, float& pdf) const
+	virtual bool Scatter(const Ray& ray, const Intersection& intersect, Ray& scatterRay) const
 	{
 		vec3 outwardNormal;
 		float ni_over_nt;
-		attenuation = vec3(1, 1, 1);
 		float cosine;
 		if (dot(ray.direction, intersect.N) > 0)
 		{

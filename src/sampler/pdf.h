@@ -28,7 +28,7 @@ public:
 
 	virtual float Value(const vec3& direction) const override
 	{
-		return 1.0f / M_PI;
+		return INV_PI;
 
 	}
 
@@ -50,10 +50,10 @@ public:
 
 	virtual float Value(const vec3& direction) const override
 	{
-		float cosine = dot(normalize(direction), uvw.w());
-		if (cosine > 0)
+		float cosine = dot(normalize(direction), normalize(uvw.w()));
+		if (cosine >= 0)
 		{
-			return cosine / M_PI;
+			return cosine * INV_PI;
 		}
 		return 0;
 
