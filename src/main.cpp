@@ -11,7 +11,7 @@
 #include "intersection/rectangle.h"
 #include "intersection/scene.h"
 #include "intersection/sphere.h"
-#include "intersection/triangle.h"
+#include "intersection/mesh.h"
 #include "material/diffuse_light.h"
 #include "sampler/pdf.h"
 #include "sampler/sampler.h"
@@ -64,8 +64,8 @@ vec3 Shade(const Ray& r, int depth)
 					Hitable* light = g_scene.lights[0];
 					// HitablePDF pdfLight(light, intersect.P);
 					// CosinePDF pdfCosine(intersect.N);
-					// UniformPDF pdfCosine(intersect.N);
-					// MixturePDF pdfMix(&pdfLight, &pdfCosine);
+					UniformPDF pdfCosine(intersect.N);
+					MixturePDF pdfMix(&pdfLight, &pdfCosine);
 					
 					// DEBUG
 					// HitablePDF pdfMix(light, intersect.P);
@@ -73,10 +73,11 @@ vec3 Shade(const Ray& r, int depth)
 					UniformPDF pdfMix(intersect.N);
 
 
-					scatterRay = Ray(intersect.P, pdfMix.Generate(), r.time);
+					vec3 scatteredDirection = pdfMix.Generate();
+					scatterRay = Ray(intersect.P, scatteredDirection, r.time);
 					float pdfVal = pdfMix.Value(scatterRay.direction);
 
-					float scatteringPdf = abs(dot(normalize(intersect.N), normalize(scatterRay.direction))) * INV_PI;
+					float scatteringPdf = abs(dot(normalize(intersect.N), scatterRay.direction)) * INV_PI;
 					color = emitted + albedo * scatteringPdf * Shade(scatterRay, depth - 1) / pdfVal;		
 					break;
 				}
@@ -615,8 +616,10 @@ void InitCornellBox()
 
 void InitCornellBoxMCIntegration()
 {
+	g_settings.nx = 400;
+	g_settings.ny = 400;
 	g_settings.raytracingDepth = 50;
-	g_settings.numSamplesPerPixel = 200;
+	g_settings.numSamplesPerPixel = 100;
 	g_settings.lookFrom = vec3(0, 5, 14.9);
 	g_settings.lookAt = vec3(0, 5, -1);
 	g_settings.vfov = 50;
@@ -637,7 +640,7 @@ void InitCornellBoxMCIntegration()
 	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.2)))); // red
 	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.7, 0.2)))); // green
 
-	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(15.f, 15.f, 15.f))));
+	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(10.f, 10.f, 10.f))));
 
 	// Room
 	float roomWidth = 5;
@@ -669,16 +672,18 @@ void InitCornellBoxMCIntegration()
 		20), // angle 
 		vec3(-2, 0, 1.5));
 
-	Hitable* triange = new Triangle(vec3(-1.5, 0, -1.5), vec3(1.5, 0, -1.5), vec3(0, 5, -1.5), 1);
-	g_scene.objects.emplace_back(triange);
+	// Hitable* triange = new Triangle(vec3(-1.5, 0, -1.5), vec3(1.5, 0, -1.5), vec3(0, 5, -1.5), 1);
+	// g_scene.objects.emplace_back(triange);
+	// Hitable* mesh = new mi::Mesh("../data/models/gltf/Duck/glTF/Duck.gltf", 1);
+	// g_scene.objects.emplace_back(mesh);
 
 	// Light
 	Hitable* ceilingLight = new FlipNormal(new RectXZ(vec2(-1, -1), vec2(1, 1), roomWidth * 2 - 0.01f, g_scene.materials.size() - 1));
 	g_scene.objects.emplace_back(ceilingLight);
 	g_scene.lights.emplace_back(ceilingLight);
 
-	// g_scene.objects.emplace_back(box1);
-	// g_scene.objects.emplace_back(box2);
+	g_scene.objects.emplace_back(box1);
+	g_scene.objects.emplace_back(box2);
 	
 }
 

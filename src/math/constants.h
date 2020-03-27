@@ -11,5 +11,6 @@ static const float RAD2DEG = 180.f / PI;
 static const float GRAVITY = -9.8f;
 static const float PI_OVER_2 = PI * 0.5;
 static const float PI_OVER_4 = PI * 0.25;
+static const float EPSILON = 0.00001f;
 
 #endif

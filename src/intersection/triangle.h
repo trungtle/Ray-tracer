@@ -20,17 +20,25 @@ public:
 		materialId = mId;
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const override
+	static bool RayTriangleIntersect(
+		const Ray& ray, 
+		const vec3& p0,
+		const vec3& p1,
+		const vec3& p2,
+		float tmin, 
+		float tmax, 
+		Intersection& intersect
+		)
 	{
 		// Moller-Trumbore fast ray-triangle intersection
-		vec3 e0 = points[1] - points[0];
-		vec3 e1 = points[2] - points[0];
+		vec3 e0 = p1 - p0;
+		vec3 e1 = p2 - p0;
 		vec3 pvec = cross(ray.direction, e1);
 		float det = dot(e0, pvec);
 		if (fabs(det) < 0.00001f) return false;
 
 		float invDet = 1 / det;
-		vec3 tvec = ray.origin - points[0];
+		vec3 tvec = ray.origin - p0;
 		float u = dot(tvec, pvec) * invDet;
 		if (u < 0 || u > 1) return false;
 
@@ -42,11 +50,25 @@ public:
 
 		intersect.t = t;
 		intersect.P = ray.PointAt(t);
-		intersect.N = N(intersect.P);
+		intersect.N = cross(p2 - p0, p1 - p0);;
 		intersect.UV = vec2(u, v);
-		intersect.hit = this;
 
 		return true;
+	}
+
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const override
+	{
+		bool result = RayTriangleIntersect(
+			ray, 
+			points[0],
+			points[1],
+			points[2],
+			tmin,
+			tmax,
+			intersect
+			);
+		intersect.hit = this;
+		return result;
 	}	
 
 	virtual bool BoundingBox(AABB& aabb) const override

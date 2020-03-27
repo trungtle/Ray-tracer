@@ -8,8 +8,10 @@ include_directories(
 
 # set creates a variable
 set (NUPARU "nuparu")
+set (THIRDPARTY "thirdparty")
 # add include and src directories to path
 include_directories(
+        ${THIRDPARTY}/include
         ${NUPARU}/include
         ${NUPARU}/src
 )
@@ -33,6 +35,7 @@ set(GLEW_LIBRARY_DIR ${CMAKE_LIBRARY_PATH})
 # Use find_package & find_library to link with
 find_package(OPENGL REQUIRED)
 find_package(GLEW)
+find_library(JSONCPP "jsoncpp")
 find_library(GLFW_LIBRARY "glfw3" HINTS ${GLFW_LIBRARY_DIR})
 find_library(TBB "tbb")
 find_library(HALF "half")
@@ -85,7 +88,7 @@ endif()
 # Add source files you want to compile (.cpp)
 set(CORE_SRC
         src/main.cpp
-        nuparu/src/stb_image/stb_image.c
+        src/intersection/mesh.cpp
 )
 
 add_executable(Raytracer ${CORE_SRC})

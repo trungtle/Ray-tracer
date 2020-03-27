@@ -41,12 +41,12 @@ public:
 		return p;
 	}
 
-	static vec2 RandomSampleFromConcentricUnitDisk()
+	static vec2 SampleConentricDisk()
 	{
 		float r1 = Random01();
 		float r2 = Random01();
-		r1 = 2.0 * r1 - 1.0f;
-		r2 = 2.0 * r2 - 1.0f; // mapped to -1, 1
+		r1 = 2.0f * r1 - 1.0f;
+		r2 = 2.0f * r2 - 1.0f; // mapped to -1, 1
 
 		// Degeneracy at origin
 		if (r1 == 0 && r2 == 0)
@@ -58,12 +58,12 @@ public:
 		if (fabs(r1) > fabs(r2))
 		{
 			radius = r1;
-			theta = PI_OVER_4 * r2 / r1;
+			theta = PI_OVER_4 * (r2 / r1);
 		}
 		else
 		{
 			radius = r2;
-			theta = PI_OVER_2 - PI_OVER_4 * r1 / r2;
+			theta = PI_OVER_2 - PI_OVER_4 * (r1 / r2);
 		}
 		return radius * vec2(cos(theta), sin(theta));
 	}
@@ -107,7 +107,7 @@ public:
 		// return vec3(x, y, z);
 
 		// Malley's method: sample from concentric disk, then project upward
-		vec2 r = RandomSampleFromConcentricUnitDisk();
+		vec2 r = SampleConentricDisk();
 		float z = glm::sqrt(std::max(0.0f, 1.0f - r.x * r.x - r.y * r.y));
 		return vec3(r.x, r.y, z);
 	}

@@ -3,6 +3,7 @@
 
 #include <glm/glm.hpp>
 #include <math.h>
+#include "math/constants.h"
 
 using namespace glm;
 
@@ -16,7 +17,7 @@ public:
 	}
 
 	Ray(const vec3 o, const vec3 d, float t = 0) :
-		origin(o), direction(d), time(t)
+		origin(o + d * EPSILON), direction(d), time(t)
 	{
 		direction = normalize(direction);
 	}
