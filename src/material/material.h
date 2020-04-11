@@ -163,4 +163,18 @@ public:
 	float refIdx;
 };
 
+class IsotropicMaterial : public Material
+{
+public:
+	IsotropicMaterial(Texture* albedo) : m_albedo(albedo) {}
+
+	virtual bool Scatter(const Ray& ray, const Intersection& intersect, Ray& scatterRay) const override
+	{
+		scatterRay = Ray(intersect.P, Sampler::RandomSampleInUnitSphere());
+		return true;
+	}
+
+	Texture* m_albedo;
+};
+
 #endif

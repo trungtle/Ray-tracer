@@ -5,15 +5,16 @@
 #include <tbb/tbb.h>
 
 #include "camera/Camera.h"
+#include "integrator/integrator.h"
 #include "intersection/box.h"
 #include "intersection/cylinder.h"
 #include "intersection/hitable_transform.h"
 #include "intersection/rectangle.h"
+#include "intersection/triangle.h"
 #include "intersection/scene.h"
 #include "intersection/sphere.h"
 #include "intersection/mesh.h"
 #include "material/diffuse_light.h"
-#include "sampler/pdf.h"
 #include "sampler/sampler.h"
 #include "screen/screen.h"
 #include "utility.h"
@@ -27,8 +28,8 @@ using namespace tbb;
 
 struct
 {
-	int nx = 200;
-	int ny = 200;
+	int nx = 64;
+	int ny = 64;
 	int raytracingDepth;
 	int numSamplesPerPixel;
 	vec3 lookFrom;
@@ -43,77 +44,7 @@ struct
 Scene g_scene;
 Camera* g_camera;
 Screen* g_screen;
-
-vec3 Shade(const Ray& r, int depth)
-{
-	vec3 color;
-	Intersection intersect;
-	if (g_scene.Hit(r, 0.001, 10000.0f, intersect))
-	{
-		Ray scatterRay;
-		const Material* material = g_scene.materials[intersect.hit->materialId];
-		vec3 emitted = material->Emitted(intersect.UV, intersect.P);
-
-		if (depth >= 0 && material->Scatter(r, intersect, scatterRay))
-		{
-			switch(material->type)
-			{
-				case Material::kDiffuse:
-				{
-					vec3 albedo = material->texture->value(intersect.UV, intersect.P);
-					Hitable* light = g_scene.lights[0];
-					// HitablePDF pdfLight(light, intersect.P);
-					// CosinePDF pdfCosine(intersect.N);
-					UniformPDF pdfCosine(intersect.N);
-					MixturePDF pdfMix(&pdfLight, &pdfCosine);
-					
-					// DEBUG
-					// HitablePDF pdfMix(light, intersect.P);
-					// CosinePDF pdfMix(intersect.N);
-					UniformPDF pdfMix(intersect.N);
-
-
-					vec3 scatteredDirection = pdfMix.Generate();
-					scatterRay = Ray(intersect.P, scatteredDirection, r.time);
-					float pdfVal = pdfMix.Value(scatterRay.direction);
-
-					float scatteringPdf = abs(dot(normalize(intersect.N), scatterRay.direction)) * INV_PI;
-					color = emitted + albedo * scatteringPdf * Shade(scatterRay, depth - 1) / pdfVal;		
-					break;
-				}
-				case Material::kMetal:
-				{
-					vec3 albedo = material->texture->value(intersect.UV, intersect.P);
-					color = emitted + albedo * Shade(scatterRay, depth - 1);		
-					break;
-				}
-				case Material::kDielectric:
-				{
-					vec3 albedo = vec3(1, 1, 1);
-					color = emitted + albedo * Shade(scatterRay, depth - 1);		
-					break;
-				}
-				case Material::kLight:
-				default:
-				{
-					color = emitted;
-					break;
-				}
-			}
-		}
-		else
-		{
-			color = emitted;
-		}				
-	}
-	else
-	{
-		color = Screen::SkyColor(r);
-	}
-
-	color = Tr::deNaN(color);
-	return color;
-}
+Integrator* g_integrator;
 
 class SumColor
 {
@@ -130,7 +61,7 @@ public:
 		size_t end = range.end();		
 		for (size_t i = range.begin(); i != end; i++)
 		{
-			sum += Shade(ray, g_settings.raytracingDepth);
+			sum += g_integrator->Shade(g_scene, ray, g_settings.raytracingDepth);
 		}
 		_sumColor = sum;
 	}
@@ -164,6 +95,9 @@ void RenderFullscreen()
 		g_settings.aspect, 
 		g_settings.aperture, 
 		g_settings.focusDist, 0.0f, 1.0f);
+
+	// Integrator
+	g_integrator = new Integrator();
 
 	// Begin render
 #if PARALLEL
@@ -239,7 +173,7 @@ void RenderFullscreen()
 			{
 				vec2 uv = Sampler::RandomSampleFromPixel(x, y, g_screen->width, g_screen->height);
 				Ray r = g_camera->GetRay(uv);
-				color += Shade(r, 50);
+				color += g_integrator->Shade(g_scene, r, 50);
 			}
 
 			color /= float(g_settings.numSamplesPerPixel);
@@ -619,9 +553,13 @@ void InitCornellBoxMCIntegration()
 	g_settings.nx = 400;
 	g_settings.ny = 400;
 	g_settings.raytracingDepth = 50;
-	g_settings.numSamplesPerPixel = 100;
+	g_settings.numSamplesPerPixel = 50;
 	g_settings.lookFrom = vec3(0, 5, 14.9);
 	g_settings.lookAt = vec3(0, 5, -1);
+	// Head pbrt
+	// g_settings.lookFrom = vec3(0.322839 , 0.0534825, 0.504299);
+	// g_settings.lookAt = vec3(-0.140808, -0.162727, -0.354936);
+	// Up: 0.0355799 0.964444 -0.261882
 	g_settings.vfov = 50;
 	g_settings.aspect = float(g_settings.nx) / float(g_settings.ny);
 	g_settings.aperture = 0.01f;
@@ -639,6 +577,10 @@ void InitCornellBoxMCIntegration()
 	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.2, 0.7)))); // blue
 	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.2)))); // red
 	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.7, 0.2)))); // green
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.7, 0.2)))); // green
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.8, 0.8)), 1.0));
+	g_scene.materials.emplace_back(new DielectricMaterial(2.5));
+	g_scene.materials.emplace_back(new DielectricMaterial(1.2));
 
 	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(10.f, 10.f, 10.f))));
 
@@ -671,10 +613,15 @@ void InitCornellBoxMCIntegration()
 		new Box(vec3(-(box2Height/2), 0, -(box2Height/2)), vec3((box2Height/2), box2Height, (box2Height/2)), 1),
 		20), // angle 
 		vec3(-2, 0, 1.5));
+	
+	Hitable* sphere = 
+		// new Box(vec3(-5, 0, -5), vec3(5, 5, 5), 6),
+		new Sphere(vec3(0, 5, 0), 1.5f, 6);
 
-	// Hitable* triange = new Triangle(vec3(-1.5, 0, -1.5), vec3(1.5, 0, -1.5), vec3(0, 5, -1.5), 1);
-	// g_scene.objects.emplace_back(triange);
+	//Hitable* triange = new Triangle(vec3(-1.5, 0, -1.5), vec3(1.5, 0, -1.5), vec3(0, 5, -1.5), 2);
+	//g_scene.objects.emplace_back(triange);
 	// Hitable* mesh = new mi::Mesh("../data/models/gltf/Duck/glTF/Duck.gltf", 1);
+	//Hitable* mesh = new mi::Mesh("../data/pbrt-v3-pbf/head.pbf", 3);
 	// g_scene.objects.emplace_back(mesh);
 
 	// Light
@@ -682,8 +629,9 @@ void InitCornellBoxMCIntegration()
 	g_scene.objects.emplace_back(ceilingLight);
 	g_scene.lights.emplace_back(ceilingLight);
 
-	g_scene.objects.emplace_back(box1);
-	g_scene.objects.emplace_back(box2);
+	// g_scene.objects.emplace_back(box1);
+	// g_scene.objects.emplace_back(box2);
+	g_scene.objects.emplace_back(sphere);
 	
 }
 

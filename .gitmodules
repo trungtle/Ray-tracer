@@ -1,0 +1,3 @@
+[submodule "thirdparty/pbrt-parser"]
+	path = thirdparty/pbrt-parser
+	url = https://github.com/ingowald/pbrtParser.git

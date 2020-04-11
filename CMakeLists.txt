@@ -1,17 +1,20 @@
 project(raytracer)
 cmake_minimum_required(VERSION 2.8)
 
-# include source directories
-include_directories(
-        src/
-)
+set(CMAKE_OSX_SYSROOT /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk)
+
+# Add pbrt parser from https://github.com/ingowald/pbrt-parser/
+add_subdirectory(thirdparty/pbrt-parser EXCLUDE_FROM_ALL) 
 
 # set creates a variable
 set (NUPARU "nuparu")
 set (THIRDPARTY "thirdparty")
 # add include and src directories to path
 include_directories(
+        src/
         ${THIRDPARTY}/include
+        ${THIRDPARTY}/pbrt-parser
+        ${THIRDPARTY}/pbrt-parser/pbrtParser/include/
         ${NUPARU}/include
         ${NUPARU}/src
 )
@@ -39,6 +42,7 @@ find_library(JSONCPP "jsoncpp")
 find_library(GLFW_LIBRARY "glfw3" HINTS ${GLFW_LIBRARY_DIR})
 find_library(TBB "tbb")
 find_library(HALF "half")
+find_library(PBRT "pbrtParser")
 
 add_definitions(
         -DTW_STATIC
@@ -48,7 +52,7 @@ add_definitions(
         -D_CRT_SECURE_NO_WARNINGS
 )
 
-set(CORE_LIBS ${GLFW_LIBRARY} ${GLUT_LIBRARY} ${GLEW_LIBRARY} ${JSONCPP} ${TBB} ${HALF} )
+set(CORE_LIBS ${GLFW_LIBRARY} ${GLUT_LIBRARY} ${GLEW_LIBRARY} ${JSONCPP} ${TBB} ${HALF} ${PBRT} m)
 
 # OSX-specific hacks/fixes
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

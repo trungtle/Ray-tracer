@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+
 #include "intersection/Intersection.h"
 
 using namespace glm;
@@ -21,19 +22,16 @@ namespace mi {
 class Mesh : public Hitable
 {
 public:
+	// Args:
+	// mId: Material ID
 	Mesh(const string& filePath, int mId)
 	{
 		LoadFromFile(filePath);
 
-		// Compute bbox
-		for (auto& pos : m_positions)
-		{
-			m_aabb._min = glm::min(pos, m_aabb._min);
-			m_aabb._max = glm::max(pos, m_aabb._max);
-		}
-
 		materialId = mId;
 	}
+
+	virtual ~Mesh();
 
 	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const override;
 

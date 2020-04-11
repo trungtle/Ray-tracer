@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <unordered_map>
+#include "pbrtParser/Scene.h"
 #include "intersection/Triangle.h"
 
 #define TINYGLTF_IMPLEMENTATION
@@ -43,11 +44,12 @@ std::string FileExtension(const std::string &FileName) {
 
 bool mi::Mesh::Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
 {
-	return false;
 	bool isHit = false;
 	float minT = 1000000;
-	for (int i = 0; i < m_indices.size(); i+=3)
+	for (size_t i = 0; i < m_indices.size(); i+=3)
 	{
+		if (i / 3 > 10950) break;
+		
 		const vec3& p0 = m_positions[i * 3];
 		const vec3& p1 = m_positions[i * 3 + 1];
 		const vec3& p2 = m_positions[i * 3 + 2];
@@ -71,6 +73,7 @@ bool mi::Mesh::Hit(const Ray& ray, float tmin, float tmax, Intersection& interse
 				intersect.hit = this;
 			}
 		}
+		// cout << "hit " << i / 3 << "/" << m_indices.size() / 3 << endl;
 	}
 
 	return isHit;
@@ -85,7 +88,57 @@ void mi::Mesh::LoadFromFile(const std::string& file)
 	std::string ext = FileExtension(file);
 
 	bool ret = false;
-	if (ext.compare("glb") == 0) {
+	if (ext.compare("pbrt") == 0 || ext.compare("pbf") == 0)
+	{
+		pbrt::Scene::SP scene = 
+		pbrt::Scene::loadFrom(file);
+
+		// DEBUG
+		cout << "Loaded file " << file << endl;
+		cout << "Scene: " << endl;
+
+		for (pbrt::Shape::SP shape : scene->world->shapes)
+		{
+			cout << "\tShape: " << shape->getNumPrims() << endl;
+			pbrt::TriangleMesh::SP triangleMesh = 
+				dynamic_pointer_cast<pbrt::TriangleMesh>(shape);
+
+			for (auto v : triangleMesh->vertex)
+			{
+				glm::vec3 pos(v.x, v.y, v.z);
+				m_positions.push_back(pos);
+			}
+
+			for (auto n : triangleMesh->normal)
+			{
+				glm::vec3 nor(n.x, n.y, n.z);
+				m_positions.push_back(nor);
+			}
+
+			for (int tri = 0; tri < triangleMesh->index.size(); tri++)
+			{
+				// Triangle comes in groups of 3
+				pbrt::vec3i i3 = triangleMesh->index[tri];
+				m_indices.push_back(i3.x);
+				m_indices.push_back(i3.y);
+				m_indices.push_back(i3.z);
+			}			
+			cout << endl;
+		}
+
+		pbrt::box3f bbox = scene->getBounds();
+		m_aabb._min = glm::vec3(
+			bbox.lower.x,
+			bbox.lower.y,
+			bbox.lower.z);
+		m_aabb._max =  glm::vec3(
+			bbox.upper.x,
+			bbox.upper.y,
+			bbox.upper.z);
+		cout << "Finished loading scene." << endl;
+		ret = true;
+	}
+	else if (ext.compare("glb") == 0) {
 		// assume binary glTF.
 		ret = gltf_ctx.LoadBinaryFromFile(&model, &err, &warn,
 	                                  file.c_str());
@@ -100,6 +153,18 @@ void mi::Mesh::LoadFromFile(const std::string& file)
 	}
 
 	ParseModel(model);
+
+	// Compute bbox
+	// for (auto& pos : m_positions)
+	// {
+	// 	m_aabb._min = glm::min(pos, m_aabb._min);
+	// 	m_aabb._max = glm::max(pos, m_aabb._max);
+	// }
+}
+
+mi::Mesh::~Mesh()
+{
+
 }
 
 void mi::Mesh::ParseModel(const tinygltf::Model& model)
