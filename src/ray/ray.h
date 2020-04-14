@@ -15,6 +15,13 @@ public:
 	{
 
 	}
+    
+    Ray(const Ray& other)
+    {
+        origin = other.origin;
+        direction = other.direction;
+        time = other.time;
+    }
 
 	Ray(const vec3 o, const vec3 d, float t = 0) :
 		origin(o + d * EPSILON), direction(d), time(t)

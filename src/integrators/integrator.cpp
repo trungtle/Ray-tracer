@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <fstream>
+#include <iostream>
 #include <tbb/tbb.h>
 
 #include "camera/camera.h"
@@ -13,7 +14,7 @@
 #include "screen/screen.h"
 
 
-#define PARALLEL 0
+#define PARALLEL 1
 #define REPORT 1
 
 vec3 deNaN(const vec3& v)
@@ -27,33 +28,28 @@ vec3 deNaN(const vec3& v)
 
 class SumColor
 {
-	int pixelX;
-	int pixelY;
-	std::shared_ptr<const Camera> m_camera;
 	const Integrator* m_integrator;
-	std::shared_ptr<const Screen> m_screen;
 	const Scene* m_scene;
+    Ray m_ray;
 
 public:
 
 	void operator()(const tbb::blocked_range<size_t>& range)
 	{
-		vec2 uv = Sampler::RandomSampleFromPixel(pixelX, pixelY, m_screen->width, m_screen->height);
-		Ray ray = m_camera->GetRay(uv);
+         vec3 sum = _sumColor;
+         size_t end = range.end();
 
-		vec3 sum = _sumColor;
-		size_t end = range.end();		
-
-		uint32_t depth = 50;
-		for (size_t i = range.begin(); i != end; i++)
-		{
-			sum += m_integrator->Li(*m_scene, ray, depth);
-		}
-		_sumColor = sum;
+         uint32_t depth = 50;
+         for (size_t i = range.begin(); i != end; i++)
+         {
+             sum += m_integrator->Li(*m_scene, m_ray, depth);
+         }
+        
+         _sumColor = sum;
 	}
 
 	SumColor(SumColor& other, tbb::split) : 
-		pixelX(other.pixelX), pixelY(other.pixelY), _sumColor(vec3(0, 0, 0)) 
+        m_integrator(other.m_integrator), m_scene(other.m_scene), m_ray(other.m_ray), _sumColor(vec3(0, 0, 0))
 	{}
 
 	void join(const SumColor& other)
@@ -62,19 +58,13 @@ public:
 	}
 
 	SumColor(
-		int x, 
-		int y, 
-		std::shared_ptr<const Camera> camera, 
 		const Integrator* integrator,
-		std::shared_ptr<const Screen> screen,
-		const Scene* scene
+		const Scene* scene,
+        const Ray& ray
 		) :
-			pixelX(x), 
-			pixelY(y), 
-			m_camera(camera),
 			m_integrator(integrator),
-			m_screen(screen),
 			m_scene(scene),
+            m_ray(ray),
 			_sumColor(vec3(0, 0, 0))
 	{}
 
@@ -92,22 +82,22 @@ void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
 	auto start = chrono::steady_clock::now();
 #endif
 
-	parallel_for(tbb::blocked_range2d<int>(0, m_screen->height, 0, m_screen->width),
-		[numSamplesPerPixel, &film, this, &scene](tbb::blocked_range2d<int> range)
+	parallel_for(tbb::blocked_range2d<unsigned int>(0, m_screen->height, 0, m_screen->width),
+		[numSamplesPerPixel, &film, this, &scene](tbb::blocked_range2d<unsigned int> range)
 		{
-			int rowEnd = range.rows().end();
-			for (int y = range.rows().begin(); y < rowEnd; y++)
+			for (unsigned int y = range.rows().begin(); y < range.rows().end(); y++)
 			{
-				int colEnd = range.cols().end();
-				for (int x = range.cols().begin(); x < colEnd; x++)
+				for (unsigned int x = range.cols().begin(); x < range.cols().end(); x++)
 				{
+                    vec2 uv = Sampler::RandomSampleFromPixel(x, y, m_screen->width, m_screen->height);
+                    
+                    Ray ray = m_camera->GetRay(uv);
+                    
 					SumColor sumColor(
-						x, 
-						y, 
-						m_camera, 
 						this,
-						m_screen,
-						&scene);
+                        &scene,
+                        ray
+                        );
 					parallel_reduce(tbb::blocked_range<size_t>(0, numSamplesPerPixel), sumColor);
 					vec3 color = sumColor._sumColor;
 					color /= float(numSamplesPerPixel);
@@ -149,7 +139,6 @@ void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
 	ofstream file;
 	file.open("../images/image.ppm");	
 	file << "P3\n" << m_screen->width << " " << m_screen->height << "\n255\n";
-
 #if REPORT
 	auto start = chrono::steady_clock::now();
 #endif
@@ -220,7 +209,6 @@ glm::vec3 Integrator::Li(const Scene& scene, const Ray& r, int maxDepth) const
 							// CosinePDF pdfMix(intersect.N);
 							UniformPDF pdfMix(intersect.N);
 
-
 							vec3 scatteredDirection = pdfMix.Generate();
 							scatterRay = Ray(intersect.P, scatteredDirection, r.time);
 							float pdfVal = pdfMix.Value(scatterRay.direction);
@@ -256,6 +244,7 @@ glm::vec3 Integrator::Li(const Scene& scene, const Ray& r, int maxDepth) const
 						{
 							accColor *= emitted;
 							accColor = deNaN(accColor);
+                            std::cout << "Hit light source" << std::endl;
 							return accColor;
 							break;
 						}

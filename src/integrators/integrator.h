@@ -8,9 +8,11 @@ class Camera;
 class Ray;
 class Scene;
 class Screen;
+class SumColor;
 
 class Integrator
 {
+	friend class SumColor;
 	std::shared_ptr<const Camera> m_camera;
 	std::shared_ptr<const Screen> m_screen;
 

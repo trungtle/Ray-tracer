@@ -18,12 +18,10 @@
 #include "samplers/sampler.h"
 #include "screen/screen.h"
 
-#define PARALLEL 1
 #define REPORT 1
 
 using namespace glm;
 using namespace std;
-// using namespace tbb;
 
 struct
 {
@@ -45,54 +43,6 @@ std::shared_ptr<Camera> g_camera;
 std::shared_ptr<Screen> g_screen;
 std::shared_ptr<Integrator> g_integrator;
 
-// class SumColor
-// {
-// 	int pixelX;
-// 	int pixelY;
-// 	std::shared_ptr<const Camera> m_camera;
-// 	std::shared_ptr<const Integrator> m_integrator;
-
-// public:
-
-// 	void operator()(const blocked_range<size_t>& range)
-// 	{
-// 		vec2 uv = Sampler::RandomSampleFromPixel(pixelX, pixelY, g_screen->width, g_screen->height);
-// 		Ray ray = g_camera->GetRay(uv);
-
-// 		vec3 sum = _sumColor;
-// 		size_t end = range.end();		
-// 		for (size_t i = range.begin(); i != end; i++)
-// 		{
-// 			sum += g_integrator->Li(g_scene, ray, g_settings.raytracingDepth);
-// 		}
-// 		_sumColor = sum;
-// 	}
-
-// 	SumColor(SumColor& other, split) : 
-// 		pixelX(other.pixelX), pixelY(other.pixelY), _sumColor(vec3(0, 0, 0)) 
-// 	{}
-
-// 	void join(const SumColor& other)
-// 	{
-// 		_sumColor += other._sumColor;
-// 	}
-
-// 	SumColor(
-// 		int x, 
-// 		int y, 
-// 		std::shared_ptr<const Camera> camera, 
-// 		std::shared_ptr<const Integrator> integrator
-// 		) :
-// 			pixelX(x), 
-// 			pixelY(y), 
-// 			m_camera(camera),
-// 			m_integrator(integrator),
-// 			_sumColor(vec3(0, 0, 0))
-// 	{}
-
-// 	vec3 _sumColor;
-// };
-
 void RenderFullscreen()
 {
 	// Screen
@@ -112,119 +62,7 @@ void RenderFullscreen()
 		g_camera, g_screen);
 
 	// Begin render
-#if PARALLEL
-
 	g_integrator->Render(g_scene, g_settings.numSamplesPerPixel);
-// 	vec3 film[g_settings.nx][g_settings.ny];
-
-// #if REPORT
-// 	auto start = chrono::steady_clock::now();
-// #endif
-
-// 	int numSamplesPerPixel = g_settings.numSamplesPerPixel;
-// 	parallel_for(blocked_range2d<int>(0, g_screen->height, 0, g_screen->width),
-// 		[numSamplesPerPixel, &film](blocked_range2d<int> range)
-// 		{
-// 			int rowEnd = range.rows().end();
-// 			for (int y = range.rows().begin(); y < rowEnd; y++)
-// 			{
-// 				int colEnd = range.cols().end();
-// 				for (int x = range.cols().begin(); x < colEnd; x++)
-// 				{
-// 					SumColor sumColor(x, y, g_camera, g_integrator);
-// 					parallel_reduce(blocked_range<size_t>(0, g_settings.numSamplesPerPixel), sumColor);
-// 					vec3 color = sumColor._sumColor;
-// 					color /= float(g_settings.numSamplesPerPixel);
-
-// 					// Gamma correction
-// 					color = glm::sqrt(color);
-// 					film[x][y] = color;
-
-// 				}
-// 			}
-// 		});
-// #if REPORT
-// 	auto end = chrono::steady_clock::now();
-// #endif	
-
-// 	// Output to file
-
-// 	ofstream file;
-// 	file.open("../images/image.ppm");	
-// 	file << "P3\n" << g_screen->width << " " << g_screen->height << "\n255\n";
-
-// 	for (int y = g_screen->height - 1; y >= 0; y--)
-// 	{
-// 		for (int x = 0; x < g_screen->width; x++)
-// 		{
-// 			vec3 color = film[x][y];
-// 			int ir = int(color.r * 255.99);
-// 			int ig = int(color.g * 255.99);
-// 			int ib = int(color.b * 255.99);
-// 			file << ir << " " << ig << " " << ib << "\n";
-// 		}
-// 	}
-
-// 	file.close();
-
-#else
-
-// 	ofstream file;
-// 	file.open("../images/image.ppm");	
-// 	file << "P3\n" << g_screen->width << " " << g_screen->height << "\n255\n";
-
-// #if REPORT
-// 	auto start = chrono::steady_clock::now();
-// #endif
-
-// 	for (int y = g_screen->height - 1; y >= 0; y--)
-// 	{
-// 		for (int x = 0; x < g_screen->width; x++)
-// 		{
-// 			vec3 color(0.0f, 0.0f, 0.0f);
-// 			for (int n = 0; n < g_settings.numSamplesPerPixel; n++)
-// 			{
-// 				vec2 uv = Sampler::RandomSampleFromPixel(x, y, g_screen->width, g_screen->height);
-// 				Ray r = g_camera->GetRay(uv);
-// 				color += g_integrator->Li(g_scene, r, 50);
-// 			}
-
-// 			color /= float(g_settings.numSamplesPerPixel);
-
-// 			// Gamma correction
-// 			color = glm::sqrt(color);
-
-// 			int ir = int(color.r * 255.99);
-// 			int ig = int(color.g * 255.99);
-// 			int ib = int(color.b * 255.99);
-
-// 			file << ir << " " << ig << " " << ib << "\n";
-// 		}
-// 	}
-
-// #if REPORT
-// 	auto end = chrono::steady_clock::now();
-// #endif	
-
-// 	file.close();
-
-#endif
-
-
-#if REPORT
-	//cout << "Render " << g_screen->width << "x" << g_screen->height << " image took " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << endl;
-	cout << "	" << g_settings.numSamplesPerPixel << " samples / pixel" << endl;
-	cout << "Scene: " << endl;
-	cout << "	Camera: " << endl;
-	cout << "		Look from: " << g_settings.lookFrom.x << ", " << g_settings.lookFrom.y << ", " << g_settings.lookFrom.z << endl;
-	cout << "		Look at: " << g_settings.lookAt.x << ", " << g_settings.lookAt.y << ", " << g_settings.lookAt.z << endl;
-	cout << "		Aspect: " << g_settings.aspect << endl;
-	cout << "		FOV: " << g_settings.vfov << endl;
-	cout << "		Aperture: " << g_settings.aperture << endl;
-	cout << "		Focus distance: " << g_settings.focusDist << endl;
-	cout << "	" << g_scene.objects.size() << " objects" << endl;
-	cout << "	" << g_scene.materials.size() << " materials" << endl;
-#endif
 }
 
 void InitSceneRandomBalls()
@@ -650,6 +488,10 @@ void InitCornellBoxMCIntegration()
 
 int main()
 {
+#if REPORT
+    cout << "Begin ray tracing" << endl;
+#endif
+    
 	// InitSceneRandomBalls();
 	// InitSceneMovingBalls();
 	// InitUniverseScene();
@@ -657,5 +499,21 @@ int main()
 	InitCornellBoxMCIntegration();
 	g_scene.BuildAccelerationStructure();
 	RenderFullscreen();
+    
+#if REPORT
+    //cout << "Render " << g_screen->width << "x" << g_screen->height << " image took " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << endl;
+    cout << "    " << g_settings.numSamplesPerPixel << " samples / pixel" << endl;
+    cout << "Scene: " << endl;
+    cout << "    Camera: " << endl;
+    cout << "        Look from: " << g_settings.lookFrom.x << ", " << g_settings.lookFrom.y << ", " << g_settings.lookFrom.z << endl;
+    cout << "        Look at: " << g_settings.lookAt.x << ", " << g_settings.lookAt.y << ", " << g_settings.lookAt.z << endl;
+    cout << "        Aspect: " << g_settings.aspect << endl;
+    cout << "        FOV: " << g_settings.vfov << endl;
+    cout << "        Aperture: " << g_settings.aperture << endl;
+    cout << "        Focus distance: " << g_settings.focusDist << endl;
+    cout << "    " << g_scene.objects.size() << " objects" << endl;
+    cout << "    " << g_scene.materials.size() << " materials" << endl;
+#endif
+
 	return 0;
 }
