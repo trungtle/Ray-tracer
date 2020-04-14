@@ -92,7 +92,9 @@ endif()
 # Add source files you want to compile (.cpp)
 set(CORE_SRC
         src/main.cpp
-        src/intersection/mesh.cpp
+        src/integrators/integrator.cpp
+        src/samplers/sampler.cpp
+        src/shapes/mesh.cpp
 )
 
 add_executable(Raytracer ${CORE_SRC})

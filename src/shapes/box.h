@@ -3,9 +3,10 @@
 
 #include <iostream>
 #include <glm/glm.hpp>
-#include "intersection/hitable_transform.h"
-#include "intersection/rectangle.h"
-#include "intersection/scene.h"
+
+#include "shapes/hitable_transform.h"
+#include "shapes/rectangle.h"
+#include "shapes/scene.h"
 
 using namespace glm;
 using namespace std;

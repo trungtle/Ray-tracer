@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "intersection/Intersection.h"
+#include "shapes/Intersection.h"
 
 using namespace glm;
 using namespace std;

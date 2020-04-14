@@ -3,8 +3,8 @@
 
 #include <glm/glm.hpp>
 
-#include "intersection/Intersection.h"
-#include "sampler/sampler.h"
+#include "samplers/sampler.h"
+#include "shapes/Intersection.h"
 #include "transform/onb.h"
 
 using namespace glm;

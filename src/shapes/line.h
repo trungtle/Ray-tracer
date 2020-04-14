@@ -1,7 +1,7 @@
 #ifndef LINE_H
 #define LINE_H
 
-#include "shape/point.h"
+#include "shapes/point.h"
 
 class Line
 {

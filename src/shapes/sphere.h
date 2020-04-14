@@ -2,8 +2,9 @@
 #define SPHERE_H
 
 #include <math.h>
-#include "intersection/AABB.h"
-#include "intersection/Intersection.h"
+
+#include "accelerators/AABB.h"
+#include "shapes/Intersection.h"
 
 #define DEBUG 1
 

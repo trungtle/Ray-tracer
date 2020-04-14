@@ -3,6 +3,7 @@
 
 #include <limits>
 #include <glm/glm.hpp>
+
 #include "ray/ray.h"
 
 using namespace glm;

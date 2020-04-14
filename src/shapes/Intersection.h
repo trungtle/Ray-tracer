@@ -3,7 +3,8 @@
 
 #include <string>
 #include <vector>
-#include "intersection/aabb.h"
+
+#include "accelerators/aabb.h"
 #include "motion/motion.h"
 #include "ray/ray.h"
 

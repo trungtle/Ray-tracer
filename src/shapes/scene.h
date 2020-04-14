@@ -2,10 +2,11 @@
 #define SCENE_H
 
 #include <algorithm>
-#include "intersection/AABB.h"
-#include "intersection/bvh.h"
-#include "intersection/Intersection.h"
-#include "material/material.h"
+
+#include "accelerators/AABB.h"
+#include "accelerators/bvh.h"
+#include "materials/material.h"
+#include "shapes/Intersection.h"
 
 #define USE_ACCELERATION_STRUCTURE 1
 

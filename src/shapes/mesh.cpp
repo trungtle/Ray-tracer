@@ -3,8 +3,9 @@
 #include <iostream>
 #include <stdexcept>
 #include <unordered_map>
+
 #include "pbrtParser/Scene.h"
-#include "intersection/Triangle.h"
+#include "shapes/Triangle.h"
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION

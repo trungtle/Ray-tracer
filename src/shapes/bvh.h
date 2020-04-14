@@ -3,8 +3,9 @@
 
 #include <algorithm>
 #include <vector>
-#include "intersection/AABB.h"
-#include "intersection/Intersection.h"
+
+#include "accelerators/AABB.h"
+#include "shapes/Intersection.h"
 #include "sampler/sampler.h"
 
 #define DEBUG 0

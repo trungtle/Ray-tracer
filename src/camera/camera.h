@@ -2,20 +2,23 @@
 #define CAMERA_H
 
 #include "ray/ray.h"
-#include "sampler/sampler.h"
+#include "samplers/sampler.h"
 
 class Camera
 {
 public:
 	Camera(
-	const vec3& lookFrom, 
-	const vec3& lookAt, 
-	float vfov /*vertical fov*/, 
-	float aspect, 
-	float lR, 
-	float focusDist,
-	float tStart = 0, float tEnd = 0)
-		: origin(lookFrom), lensRadius(lR), timeStart(tStart), timeEnd(tEnd)
+		const vec3& lookFrom, 
+		const vec3& lookAt, 
+		float vfov /*vertical fov*/, 
+		float aspect, 
+		float lR, 
+		float focusDist,
+		float tStart = 0, float tEnd = 0) : 
+			origin(lookFrom), 
+			lensRadius(lR), 
+			timeStart(tStart), 
+			timeEnd(tEnd)
 	{
 		float theta = vfov * M_PI / 180.0f;
 		float halfHeight = tan(theta / 2.0f);
@@ -32,7 +35,7 @@ public:
 
 	}
 
-	Ray GetRay(vec2 uv)
+	Ray GetRay(vec2 uv) const
 	{
 		vec2 rp = lensRadius * Sampler::RandomSampleFromUnitDisk();
 		vec3 offset = right * rp.x + up * rp.y;

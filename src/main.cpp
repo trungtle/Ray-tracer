@@ -1,30 +1,29 @@
 #include <chrono>
 #include <fstream>
-#include <iostream>
 #include <glm/glm.hpp>
-#include <tbb/tbb.h>
+#include <iostream>
+#include <memory>
 
 #include "camera/Camera.h"
-#include "integrator/integrator.h"
-#include "intersection/box.h"
-#include "intersection/cylinder.h"
-#include "intersection/hitable_transform.h"
-#include "intersection/rectangle.h"
-#include "intersection/triangle.h"
-#include "intersection/scene.h"
-#include "intersection/sphere.h"
-#include "intersection/mesh.h"
-#include "material/diffuse_light.h"
-#include "sampler/sampler.h"
+#include "integrators/integrator.h"
+#include "shapes/box.h"
+#include "shapes/cylinder.h"
+#include "shapes/hitable_transform.h"
+#include "shapes/rectangle.h"
+#include "shapes/triangle.h"
+#include "shapes/scene.h"
+#include "shapes/sphere.h"
+#include "shapes/mesh.h"
+#include "lights/diffuse_light.h"
+#include "samplers/sampler.h"
 #include "screen/screen.h"
-#include "utility.h"
 
 #define PARALLEL 1
 #define REPORT 1
 
 using namespace glm;
 using namespace std;
-using namespace tbb;
+// using namespace tbb;
 
 struct
 {
@@ -42,53 +41,65 @@ struct
 } g_settings;
 
 Scene g_scene;
-Camera* g_camera;
-Screen* g_screen;
-Integrator* g_integrator;
+std::shared_ptr<Camera> g_camera;
+std::shared_ptr<Screen> g_screen;
+std::shared_ptr<Integrator> g_integrator;
 
-class SumColor
-{
-	int pixelX;
-	int pixelY;
-public:
+// class SumColor
+// {
+// 	int pixelX;
+// 	int pixelY;
+// 	std::shared_ptr<const Camera> m_camera;
+// 	std::shared_ptr<const Integrator> m_integrator;
 
-	void operator()(const blocked_range<size_t>& range)
-	{
-		vec2 uv = Sampler::RandomSampleFromPixel(pixelX, pixelY, g_screen->width, g_screen->height);
-		Ray ray = g_camera->GetRay(uv);
+// public:
 
-		vec3 sum = _sumColor;
-		size_t end = range.end();		
-		for (size_t i = range.begin(); i != end; i++)
-		{
-			sum += g_integrator->Shade(g_scene, ray, g_settings.raytracingDepth);
-		}
-		_sumColor = sum;
-	}
+// 	void operator()(const blocked_range<size_t>& range)
+// 	{
+// 		vec2 uv = Sampler::RandomSampleFromPixel(pixelX, pixelY, g_screen->width, g_screen->height);
+// 		Ray ray = g_camera->GetRay(uv);
 
-	SumColor(SumColor& other, split) : 
-		pixelX(other.pixelX), pixelY(other.pixelY), _sumColor(vec3(0, 0, 0)) 
-	{}
+// 		vec3 sum = _sumColor;
+// 		size_t end = range.end();		
+// 		for (size_t i = range.begin(); i != end; i++)
+// 		{
+// 			sum += g_integrator->Li(g_scene, ray, g_settings.raytracingDepth);
+// 		}
+// 		_sumColor = sum;
+// 	}
 
-	void join(const SumColor& other)
-	{
-		_sumColor += other._sumColor;
-	}
+// 	SumColor(SumColor& other, split) : 
+// 		pixelX(other.pixelX), pixelY(other.pixelY), _sumColor(vec3(0, 0, 0)) 
+// 	{}
 
-	SumColor(int x, int y) :
-		pixelX(x), pixelY(y), _sumColor(vec3(0, 0, 0))
-	{}
+// 	void join(const SumColor& other)
+// 	{
+// 		_sumColor += other._sumColor;
+// 	}
 
-	vec3 _sumColor;
-};
+// 	SumColor(
+// 		int x, 
+// 		int y, 
+// 		std::shared_ptr<const Camera> camera, 
+// 		std::shared_ptr<const Integrator> integrator
+// 		) :
+// 			pixelX(x), 
+// 			pixelY(y), 
+// 			m_camera(camera),
+// 			m_integrator(integrator),
+// 			_sumColor(vec3(0, 0, 0))
+// 	{}
+
+// 	vec3 _sumColor;
+// };
 
 void RenderFullscreen()
 {
 	// Screen
-	g_screen = new Screen(g_settings.nx, g_settings.ny);
+	g_screen = std::make_shared<Screen>(g_settings.nx, g_settings.ny);
 
 	// Camera
-	g_camera = new Camera(
+	g_camera = std::make_shared<Camera>(
 		g_settings.lookFrom, 
 		g_settings.lookAt, 
 		g_settings.vfov, 
@@ -97,109 +108,111 @@ void RenderFullscreen()
 		g_settings.focusDist, 0.0f, 1.0f);
 
 	// Integrator
-	g_integrator = new Integrator();
+	g_integrator = std::make_shared<Integrator>(
+		g_camera, g_screen);
 
 	// Begin render
 #if PARALLEL
 
-	vec3 film[g_settings.nx][g_settings.ny];
+	g_integrator->Render(g_scene, g_settings.numSamplesPerPixel);
+// 	vec3 film[g_settings.nx][g_settings.ny];
 
-#if REPORT
-	auto start = chrono::steady_clock::now();
-#endif
+// #if REPORT
+// 	auto start = chrono::steady_clock::now();
+// #endif
 
-	int numSamplesPerPixel = g_settings.numSamplesPerPixel;
-	parallel_for(blocked_range2d<int>(0, g_screen->height, 0, g_screen->width),
-		[numSamplesPerPixel, &film](blocked_range2d<int> range)
-		{
-			int rowEnd = range.rows().end();
-			for (int y = range.rows().begin(); y < rowEnd; y++)
-			{
-				int colEnd = range.cols().end();
-				for (int x = range.cols().begin(); x < colEnd; x++)
-				{
-					SumColor sumColor(x, y);
-					parallel_reduce(blocked_range<size_t>(0, g_settings.numSamplesPerPixel), sumColor);
-					vec3 color = sumColor._sumColor;
-					color /= float(g_settings.numSamplesPerPixel);
+// 	int numSamplesPerPixel = g_settings.numSamplesPerPixel;
+// 	parallel_for(blocked_range2d<int>(0, g_screen->height, 0, g_screen->width),
+// 		[numSamplesPerPixel, &film](blocked_range2d<int> range)
+// 		{
+// 			int rowEnd = range.rows().end();
+// 			for (int y = range.rows().begin(); y < rowEnd; y++)
+// 			{
+// 				int colEnd = range.cols().end();
+// 				for (int x = range.cols().begin(); x < colEnd; x++)
+// 				{
+// 					SumColor sumColor(x, y, g_camera, g_integrator);
+// 					parallel_reduce(blocked_range<size_t>(0, g_settings.numSamplesPerPixel), sumColor);
+// 					vec3 color = sumColor._sumColor;
+// 					color /= float(g_settings.numSamplesPerPixel);
 
-					// Gamma correction
-					color = glm::sqrt(color);
-					film[x][y] = color;
+// 					// Gamma correction
+// 					color = glm::sqrt(color);
+// 					film[x][y] = color;
 
-				}
-			}
-		});
-#if REPORT
-	auto end = chrono::steady_clock::now();
-#endif	
+// 				}
+// 			}
+// 		});
+// #if REPORT
+// 	auto end = chrono::steady_clock::now();
+// #endif	
 
-	// Output to file
+// 	// Output to file
 
-	ofstream file;
-	file.open("../images/image.ppm");	
-	file << "P3\n" << g_screen->width << " " << g_screen->height << "\n255\n";
+// 	ofstream file;
+// 	file.open("../images/image.ppm");	
+// 	file << "P3\n" << g_screen->width << " " << g_screen->height << "\n255\n";
 
-	for (int y = g_screen->height - 1; y >= 0; y--)
-	{
-		for (int x = 0; x < g_screen->width; x++)
-		{
-			vec3 color = film[x][y];
-			int ir = int(color.r * 255.99);
-			int ig = int(color.g * 255.99);
-			int ib = int(color.b * 255.99);
-			file << ir << " " << ig << " " << ib << "\n";
-		}
-	}
+// 	for (int y = g_screen->height - 1; y >= 0; y--)
+// 	{
+// 		for (int x = 0; x < g_screen->width; x++)
+// 		{
+// 			vec3 color = film[x][y];
+// 			int ir = int(color.r * 255.99);
+// 			int ig = int(color.g * 255.99);
+// 			int ib = int(color.b * 255.99);
+// 			file << ir << " " << ig << " " << ib << "\n";
+// 		}
+// 	}
 
-	file.close();
+// 	file.close();
 
 #else
 
-	ofstream file;
-	file.open("../images/image.ppm");	
-	file << "P3\n" << g_screen->width << " " << g_screen->height << "\n255\n";
+// 	ofstream file;
+// 	file.open("../images/image.ppm");	
+// 	file << "P3\n" << g_screen->width << " " << g_screen->height << "\n255\n";
 
-#if REPORT
-	auto start = chrono::steady_clock::now();
+// #if REPORT
+// 	auto start = chrono::steady_clock::now();
+// #endif
+
+// 	for (int y = g_screen->height - 1; y >= 0; y--)
+// 	{
+// 		for (int x = 0; x < g_screen->width; x++)
+// 		{
+// 			vec3 color(0.0f, 0.0f, 0.0f);
+// 			for (int n = 0; n < g_settings.numSamplesPerPixel; n++)
+// 			{
+// 				vec2 uv = Sampler::RandomSampleFromPixel(x, y, g_screen->width, g_screen->height);
+// 				Ray r = g_camera->GetRay(uv);
+// 				color += g_integrator->Li(g_scene, r, 50);
+// 			}
+
+// 			color /= float(g_settings.numSamplesPerPixel);
+
+// 			// Gamma correction
+// 			color = glm::sqrt(color);
+
+// 			int ir = int(color.r * 255.99);
+// 			int ig = int(color.g * 255.99);
+// 			int ib = int(color.b * 255.99);
+
+// 			file << ir << " " << ig << " " << ib << "\n";
+// 		}
+// 	}
+
+// #if REPORT
+// 	auto end = chrono::steady_clock::now();
+// #endif	
+
+// 	file.close();
+
 #endif
 
-	for (int y = g_screen->height - 1; y >= 0; y--)
-	{
-		for (int x = 0; x < g_screen->width; x++)
-		{
-			vec3 color(0.0f, 0.0f, 0.0f);
-			for (int n = 0; n < g_settings.numSamplesPerPixel; n++)
-			{
-				vec2 uv = Sampler::RandomSampleFromPixel(x, y, g_screen->width, g_screen->height);
-				Ray r = g_camera->GetRay(uv);
-				color += g_integrator->Shade(g_scene, r, 50);
-			}
-
-			color /= float(g_settings.numSamplesPerPixel);
-
-			// Gamma correction
-			color = glm::sqrt(color);
-
-			int ir = int(color.r * 255.99);
-			int ig = int(color.g * 255.99);
-			int ib = int(color.b * 255.99);
-
-			file << ir << " " << ig << " " << ib << "\n";
-		}
-	}
 
 #if REPORT
-	auto end = chrono::steady_clock::now();
-#endif	
-
-	file.close();
-
-#endif
-
-
-#if REPORT
-	cout << "Render " << g_screen->width << "x" << g_screen->height << " image took " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << endl;
+	//cout << "Render " << g_screen->width << "x" << g_screen->height << " image took " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << endl;
 	cout << "	" << g_settings.numSamplesPerPixel << " samples / pixel" << endl;
 	cout << "Scene: " << endl;
 	cout << "	Camera: " << endl;
@@ -631,7 +644,7 @@ void InitCornellBoxMCIntegration()
 
 	// g_scene.objects.emplace_back(box1);
 	// g_scene.objects.emplace_back(box2);
-	g_scene.objects.emplace_back(sphere);
+	// g_scene.objects.emplace_back(sphere);
 	
 }
 

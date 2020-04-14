@@ -2,20 +2,21 @@
 #define MATERIAL_H
 
 #include <iostream>
+
 #include "ray/ray.h"
-#include "intersection/intersection.h"
-#include "sampler/sampler.h"
-#include "texture/texture.h"
+#include "samplers/sampler.h"
+#include "shapes/intersection.h"
+#include "textures/texture.h"
 #include "transform/onb.h"
 
 using namespace glm;
 
-vec3 Reflect(const vec3& in, const vec3& normal)
+static vec3 Reflect(const vec3& in, const vec3& normal)
 {
 	return in - 2 * dot(in, normal) * normal;
 }
 
-bool Refract(const vec3& in, const vec3& normal, float ni_over_nt, vec3& refracted)
+static bool Refract(const vec3& in, const vec3& normal, float ni_over_nt, vec3& refracted)
 {
 	// Snell's law
 	vec3 uv = normalize(in);
@@ -33,7 +34,7 @@ bool Refract(const vec3& in, const vec3& normal, float ni_over_nt, vec3& refract
 }
 
 // Approximate glass
-float Schlick(float cosine, float refIdx)
+static float Schlick(float cosine, float refIdx)
 {
 	float r0 = (1.0 - refIdx) / (1.0 + refIdx);
 	r0 = r0 * r0;

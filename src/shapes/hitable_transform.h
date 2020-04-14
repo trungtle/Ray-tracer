@@ -1,7 +1,7 @@
 #ifndef HITABLE_TRANSFORM_H
 #define HITABLE_TRANSFORM_H
 
-#include "intersection/Intersection.h"
+#include "shapes/Intersection.h"
 
 class FlipNormal : public Hitable
 {

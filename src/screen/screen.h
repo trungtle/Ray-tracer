@@ -1,13 +1,14 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
+#include <glm/glm.hpp>
+
 #include "ray/ray.h"
-#include "utility.h"
 
 using namespace glm;
 using namespace std;
 
-vec3 lerp(float t, const vec3& fullT, const vec3& zeroT)
+static vec3 lerp(float t, const vec3& fullT, const vec3& zeroT)
 {
 	return (1.0f - t) * zeroT + t * fullT;
 }
@@ -26,7 +27,7 @@ struct Screen
 
 		vec3 normR = ray.direction;
 		float t = 0.5f * (normR.y + 1.0f);
-		return Tr::lerp(t, skyorange, white);
+		return lerp(t, skyorange, white);
 	}
 
 	static vec3 NightColor(const Ray& ray)
@@ -36,7 +37,7 @@ struct Screen
 
 		vec3 normR = ray.direction;
 		float t = 0.7f * (normR.y + 1.0f);
-		return Tr::lerp(t, darksky, black);
+		return lerp(t, darksky, black);
 	}
 
 	static vec3 GalaxyColor(const Ray& ray)
@@ -47,7 +48,7 @@ struct Screen
 
 		vec3 normR = ray.direction;
 		float t = 0.5f * (normR.x + 0.7f);
-		return Tr::lerp(t * t * t * t, sun, black);
+		return lerp(t * t * t * t, sun, black);
 	}
 
 	int width;

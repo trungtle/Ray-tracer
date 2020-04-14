@@ -4,7 +4,8 @@
 #include <array>
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
-#include "intersection/Intersection.h"
+
+#include "shapes/Intersection.h"
 
 using namespace glm;
 using namespace std;

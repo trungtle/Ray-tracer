@@ -2,14 +2,21 @@
 #define CYLINDER_H
 
 #include <iostream>
-#include "intersection/disk.h"
-#include "intersection/hitable_transform.h"
-#include "intersection/Intersection.h"
-#include "intersection/scene.h"
-#include "utility.h"
+
+#include "shapes/disk.h"
+#include "shapes/hitable_transform.h"
+#include "shapes/Intersection.h"
+#include "shapes/scene.h"
 
 using namespace glm;
 using namespace std;
+
+static bool AreSame(float a, float b)
+{
+	static const float eps = 0.00001f;
+    
+    return fabs(a - b) < eps;
+}
 
 class Cylinder : public Hitable
 {
@@ -81,7 +88,7 @@ public:
 
 	vec2 UV(const vec3& point) const
 	{
-		if (Tr::AreSame(point.y, yMax) || Tr::AreSame(point.y, yMin))
+		if (AreSame(point.y, yMax) || AreSame(point.y, yMin))
 		{
 			vec2 uv;
 			float theta = atan2(point.z, point.x);

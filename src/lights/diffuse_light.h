@@ -1,8 +1,8 @@
 #ifndef DIFFUSE_LIGHT_H
 #define DIFFUSE_LIGHT_H
 
-#include "material/material.h"
-#include "texture/texture.h"
+#include "materials/material.h"
+#include "textures/texture.h"
 
 class DiffuseLight : public Material
 {
