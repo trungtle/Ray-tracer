@@ -404,7 +404,7 @@ void InitCornellBoxMCIntegration()
 	g_settings.nx = 400;
 	g_settings.ny = 400;
 	g_settings.raytracingDepth = 50;
-	g_settings.numSamplesPerPixel = 50;
+	g_settings.numSamplesPerPixel = 400;
 	g_settings.lookFrom = vec3(0, 5, 14.9);
 	g_settings.lookAt = vec3(0, 5, -1);
 	// Head pbrt

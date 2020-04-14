@@ -26,6 +26,8 @@ vec3 deNaN(const vec3& v)
 	return temp;
 }
 
+/** Sum over the number of samples
+ */
 class SumColor
 {
 	const Integrator* m_integrator;
@@ -177,6 +179,7 @@ void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
 #endif			
 }
 
+
 glm::vec3 Integrator::Li(const Scene& scene, const Ray& r, int maxDepth) const
 {
 		uint32_t depth = 0;
@@ -199,23 +202,23 @@ glm::vec3 Integrator::Li(const Scene& scene, const Ray& r, int maxDepth) const
 						{
 							vec3 albedo = material->texture->value(intersect.UV, intersect.P);
 							Hitable* light = scene.lights[0];
-							// HitablePDF pdfLight(light, intersect.P);
-							// CosinePDF pdfCosine(intersect.N);
+                            HitablePDF pdfLight(light, intersect.P);
+                            CosinePDF pdfCosine(intersect.N);
 							//UniformPDF pdfCosine(intersect.N);
-							//MixturePDF pdfMix(&pdfLight, &pdfCosine);
+							MixturePDF pdfMix(&pdfLight, &pdfCosine);
 							
 							// DEBUG
 							// HitablePDF pdfMix(light, intersect.P);
 							// CosinePDF pdfMix(intersect.N);
-							UniformPDF pdfMix(intersect.N);
+							//UniformPDF pdfMix(intersect.N);
 
 							vec3 scatteredDirection = pdfMix.Generate();
 							scatterRay = Ray(intersect.P, scatteredDirection, r.time);
 							float pdfVal = pdfMix.Value(scatterRay.direction);
 
 							float scatteringPdf = abs(dot(normalize(intersect.N), scatterRay.direction)) * INV_PI;
-							
-							color = emitted + albedo * scatteringPdf / pdfVal;	
+                            float weight = pdfMix.Weight(scatterRay.direction);
+							color = albedo * scatteringPdf * weight / pdfCosine->Value(scatterRay.direction);
 
 							if (depth == 0)
 							{
@@ -242,19 +245,22 @@ glm::vec3 Integrator::Li(const Scene& scene, const Ray& r, int maxDepth) const
 						case Material::kLight:
 						default:
 						{
-							accColor *= emitted;
-							accColor = deNaN(accColor);
-                            std::cout << "Hit light source" << std::endl;
-							return accColor;
 							break;
 						}
 					}
 				}
 				else
 				{
-					accColor *= emitted;
-					break;
-				}				
+                    if (depth == 0 && material->type == Material::kLight)
+                    {
+                        return emitted;
+                    }
+                    else
+                    {
+                        accColor *= emitted;
+                        break;
+                    }
+				}
 			}
 			else
 			{

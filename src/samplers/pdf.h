@@ -96,12 +96,8 @@ class MixturePDF : public PDF
 {
 public:
 	MixturePDF(PDF* p1, PDF* p2) :
-		pdf1(p1), pdf2(p2)
-	{
-
-	}
-
-
+		pdf1(p1), pdf2(p2){}
+    
 	virtual float Value(const vec3& direction) const override
 	{
 		return 0.5f * pdf1->Value(direction) + 0.5f * pdf2->Value(direction);
@@ -118,9 +114,30 @@ public:
 			return pdf2->Generate();
 		}
 	}
+    
+    float Weight(vec3 direction)
+    {
+        float pdf1Val = pdf1->Value(direction);
+        float pdf2Val = pdf2->Value(direction);
+        float weight = MixturePDF::PowerHeuristic(1, pdf1Val, 1, pdf2Val);
+        return weight;
+    }
 
+    static float BalanceHeuristic(int nf, float fPdf, int ng, float gPdf)
+    {
+        return (nf * fPdf) / (nf * fPdf + ng * gPdf);
+    }
+    
+    // Should have better result than using the balance heuristic
+    static float PowerHeuristic(int nf, loat fPdf, int ng, float gPdf)
+    {
+        float f = nf * fPdf, g = g * gPdf;
+        return (f * f) / (f * f + g * g);
+    }
+    
 	PDF* pdf1;
 	PDF* pdf2;
+    
 };
 
 #endif

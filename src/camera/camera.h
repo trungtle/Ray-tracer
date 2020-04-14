@@ -12,11 +12,11 @@ public:
 		const vec3& lookAt, 
 		float vfov /*vertical fov*/, 
 		float aspect, 
-		float lR, 
+		float lensRadius, 
 		float focusDist,
 		float tStart = 0, float tEnd = 0) : 
 			origin(lookFrom), 
-			lensRadius(lR), 
+			m_lensRadius(lensRadius), 
 			timeStart(tStart), 
 			timeEnd(tEnd)
 	{
@@ -37,7 +37,7 @@ public:
 
 	Ray GetRay(vec2 uv) const
 	{
-		vec2 rp = lensRadius * Sampler::RandomSampleFromUnitDisk();
+		vec2 rp = m_lensRadius * Sampler::RandomSampleFromUnitDisk();
 		vec3 offset = right * rp.x + up * rp.y;
 		float time = timeStart + Sampler::Random01() * (timeEnd - timeStart);
 		Ray r(origin + offset, lowerLeft + uv.x * horizontal + uv.y * vertical - origin - offset, time);
@@ -52,7 +52,7 @@ private:
 	vec3 up;
 	vec3 forward;
 	vec3 right;
-	float lensRadius;
+	float m_lensRadius;
 	float timeStart;
 	float timeEnd;
 

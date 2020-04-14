@@ -23,7 +23,7 @@ public:
         time = other.time;
     }
 
-	Ray(const vec3 o, const vec3 d, float t = 0) :
+	Ray(const vec3& o, const vec3& d, float t = 0) :
 		origin(o + d * EPSILON), direction(d), time(t)
 	{
 		direction = normalize(direction);
