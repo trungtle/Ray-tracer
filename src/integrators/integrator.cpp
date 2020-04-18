@@ -13,18 +13,8 @@
 #include "shapes/scene.h"
 #include "screen/screen.h"
 
-
 #define PARALLEL 1
 #define REPORT 1
-
-vec3 deNaN(const vec3& v)
-{
-	vec3 temp = v;
-	if (!(temp.x == temp.x)) temp.x = 0;
-	if (!(temp.y == temp.y)) temp.y = 0;
-	if (!(temp.z == temp.z)) temp.z = 0;
-	return temp;
-}
 
 /** Sum over the number of samples
  */
@@ -183,7 +173,7 @@ Spectrum Integrator::Li(const Scene& scene, const Ray& r, int maxDepth) const
 
                         float scatteringPdf = abs(dot(normalize(intersect.N), scatterRay.direction)) * INV_PI;
                         bounceColor = albedo * scatteringPdf / pdfVal;
-                        //bounceColor = bounceColor.Clamp(0., 1.0f);
+                        bounceColor = bounceColor.Clamp(0., 1.0f);
                         
                         if (depth == 0)
                         {

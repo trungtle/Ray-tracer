@@ -243,8 +243,8 @@ public:
         CoefficientSpectrum ret;
         for (int i = 0; i < nSpectrumSamples; i++)
         {
-            if (ret.m_c[i] < low) ret.m_c[i] = low;
-            if (ret.m_c[i] > high) ret.m_c[i] = high;
+            if (m_c[i] < low) ret.m_c[i] = low;
+            if (m_c[i] > high) ret.m_c[i] = high;
             ret.m_c[i] = m_c[i];
         }
         return ret;
