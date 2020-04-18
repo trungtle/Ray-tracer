@@ -1,12 +1,15 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include "core/film.h"
 #include "ray/ray.h"
 #include "samplers/sampler.h"
 
 class Camera
 {
 public:
+    Film* film;
+    
 	Camera(
 		const vec3& lookFrom, 
 		const vec3& lookAt, 
@@ -14,9 +17,11 @@ public:
 		float aspect, 
 		float lensRadius, 
 		float focusDist,
+        Film* film,
 		float tStart = 0, float tEnd = 0) : 
 			origin(lookFrom), 
-			m_lensRadius(lensRadius), 
+			m_lensRadius(lensRadius),
+            film(film),
 			timeStart(tStart), 
 			timeEnd(tEnd)
 	{

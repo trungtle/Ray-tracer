@@ -42,7 +42,7 @@ public:
 			float t = (-b - glm::sqrt(discriminant)) / (2.0f * a);
 			if (t > tmin && t < tmax)
 			{
-				vec3 hitPoint = ray.PointAt(t);
+				vec3 hitPoint = ray(t);
 				if (hitPoint.y >= yMin && hitPoint.y <= yMax)
 				{
 					intersect.t = t;
@@ -57,7 +57,7 @@ public:
 			t = (-b + glm::sqrt(discriminant)) / (2.0f * a);
 			if (t > tmin && t < tmax)
 			{
-				vec3 hitPoint = ray.PointAt(t);
+				vec3 hitPoint = ray(t);
 				if (hitPoint.y >= yMin && hitPoint.y <= yMax)
 				{
 					intersect.t = t;

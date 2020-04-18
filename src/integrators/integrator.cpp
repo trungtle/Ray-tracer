@@ -78,16 +78,14 @@ public:
 
 void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
 {
+#if REPORT
+    auto start = chrono::steady_clock::now();
+#endif
+    
 #if PARALLEL
 
-	vec3 film[m_screen->width][m_screen->height];
-
-#if REPORT
-	auto start = chrono::steady_clock::now();
-#endif
-
 	parallel_for(tbb::blocked_range2d<unsigned int>(0, m_screen->height, 0, m_screen->width),
-		[numSamplesPerPixel, &film, this, &scene](tbb::blocked_range2d<unsigned int> range)
+		[numSamplesPerPixel, this, &scene](tbb::blocked_range2d<unsigned int> range)
 		{
 			for (unsigned int y = range.rows().begin(); y < range.rows().end(); y++)
 			{
@@ -108,47 +106,11 @@ void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
 
 					// Gamma correction
                     color = Sqrt(color);
-                    float rgb[3];
-                    color.ToRGB(rgb);
-                    glm::vec3 vrgb(rgb[0], rgb[1], rgb[2]);
-					film[x][y] = vrgb;
-
+                    m_camera->film->SetPixel(color, x, y);
 				}
 			}
 		});
-
-#if REPORT
-		auto end = chrono::steady_clock::now();
-#endif	
-
-		// Output to file
-
-		ofstream file;
-		file.open("../images/image.ppm");	
-		file << "P3\n" << m_screen->width << " " << m_screen->height << "\n255\n";
-
-		for (int y = m_screen->height - 1; y >= 0; y--)
-		{
-			for (int x = 0; x < m_screen->width; x++)
-			{
-				vec3 color = film[x][y];
-				int ir = int(color.r * 255.99);
-				int ig = int(color.g * 255.99);
-				int ib = int(color.b * 255.99);
-				file << ir << " " << ig << " " << ib << "\n";
-			}
-		}
-
-		file.close();
-
 #else
-
-	ofstream file;
-	file.open("../images/image.ppm");	
-	file << "P3\n" << m_screen->width << " " << m_screen->height << "\n255\n";
-#if REPORT
-	auto start = chrono::steady_clock::now();
-#endif
 
 	for (int y = m_screen->height - 1; y >= 0; y--)
 	{
@@ -168,24 +130,18 @@ void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
 
 			// Gamma correction
             color = Sqrt(color);
-            float rgb[3];
-            color.ToRGB(rgb);
-            
-			int ir = int(rgb[0] * 255.99);
-			int ig = int(rgb[1] * 255.99);
-			int ib = int(rgb[2] * 255.99);
-
-			file << ir << " " << ig << " " << ib << "\n";
+            m_camera->film->SetPixel(color, x, y);
 		}
 	}
 
+#endif
+
 #if REPORT
-	auto end = chrono::steady_clock::now();
-#endif	
+    auto end = chrono::steady_clock::now();
+#endif
 
-	file.close();
-
-#endif			
+    // Output to file
+    m_camera->film->WriteImage();
 }
 
 
@@ -227,7 +183,7 @@ Spectrum Integrator::Li(const Scene& scene, const Ray& r, int maxDepth) const
 
                         float scatteringPdf = abs(dot(normalize(intersect.N), scatterRay.direction)) * INV_PI;
                         bounceColor = albedo * scatteringPdf / pdfVal;
-                        bounceColor = bounceColor.Clamp(0., 1.0f);
+                        //bounceColor = bounceColor.Clamp(0., 1.0f);
                         
                         if (depth == 0)
                         {

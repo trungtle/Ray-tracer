@@ -26,7 +26,7 @@ public:
 		float t = (center.y - ray.origin.y) / ray.direction.y;
 		if (t > tmin && t < tmax)
 		{
-			vec3 hitPoint = ray.PointAt(t);
+			vec3 hitPoint = ray(t);
 			float distToCenterSq = glm::distance2(hitPoint, center);
 			if (distToCenterSq <= radius * radius)
 			{

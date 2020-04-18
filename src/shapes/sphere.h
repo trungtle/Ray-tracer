@@ -46,7 +46,7 @@ public:
 			if (t > tmin && t < tmax)
 			{
 				intersect.t = t;
-				intersect.P = ray.PointAt(t);
+				intersect.P = ray(t);
 				intersect.N = N(intersect.P, ray.time);
 				intersect.UV = UV(intersect.P);
 				intersect.hit = this;
@@ -56,7 +56,7 @@ public:
 			if (t > tmin && t < tmax)
 			{
 				intersect.t = t;
-				intersect.P = ray.PointAt(t);
+				intersect.P = ray(t);
 				intersect.N = N(intersect.P, ray.time);
 				intersect.UV = UV(intersect.P);
 				intersect.hit = this;

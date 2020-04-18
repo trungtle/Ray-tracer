@@ -50,7 +50,7 @@ public:
 		float t = dot(e1, qvec) * invDet;
 
 		intersect.t = t;
-		intersect.P = ray.PointAt(t);
+		intersect.P = ray(t);
 		intersect.N = cross(p2 - p0, p1 - p0);;
 		intersect.UV = vec2(u, v);
 

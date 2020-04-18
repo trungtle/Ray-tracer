@@ -6,11 +6,19 @@
 
 #include "material/material.h"
 #include "intersection/Intersection.h"
+#include "samplers/sampler.h"
 #include "texture/texture.h"
 
 using namespace glm;
 using namespace std;
 
+class Medium
+{
+public:
+    virtual ~Medium() {}
+    virtual Spectrum Tr(const Ray& ray, Sampler& sampler) const = 0;
+//    virtual Spectrum Sample(const Ray& ray, Sampler& sampler, MemoryArena& arena, MediumInteraction* mi) const = 0;
+};
 
 
 class ConstantMedium : public Hitable
@@ -42,5 +50,23 @@ public:
 
 };
 
+
+/** Represent the boundary between two media.
+ *  N.B: It's possible to have inconsitent media configuration.
+ *       It is up to the user to make sure the setup is consistent.
+ */
+struct MediumInterface
+{
+    MediumInterface(const Medium* medium) :
+    inside(medium), outside(medium) {}
+    
+    MediumInterface(const Medium* inside, const Medium* outside) :
+    inside(inside), outside(outside) {}
+    
+    /** Checks whether the MediumInterface marks the transition between two distinc media */
+    bool IsMediumTransition() const { return inside != outside; }
+    
+    const Medium* inside, outside;
+};
 
 #endif

@@ -40,30 +40,34 @@ struct
 } g_settings;
 
 Scene g_scene;
-std::shared_ptr<Camera> g_camera;
-std::shared_ptr<Screen> g_screen;
-std::shared_ptr<Integrator> g_integrator;
 
 void RenderFullscreen()
 {
 	// Screen
-	g_screen = std::make_shared<Screen>(g_settings.nx, g_settings.ny);
-
+    std::shared_ptr<Screen> screen;
+	screen = std::make_shared<Screen>(g_settings.nx, g_settings.ny);
+    
+    Film film(g_settings.nx, g_settings.ny, "image.ppm");
+    
 	// Camera
-	g_camera = std::make_shared<Camera>(
+    std::shared_ptr<Camera> camera;
+	camera = std::make_shared<Camera>(
 		g_settings.lookFrom, 
 		g_settings.lookAt, 
 		g_settings.vfov, 
 		g_settings.aspect, 
 		g_settings.aperture, 
-		g_settings.focusDist, 0.0f, 1.0f);
+		g_settings.focusDist,
+        &film,
+        0.0f, 1.0f);
 
 	// Integrator
-	g_integrator = std::make_shared<Integrator>(
-		g_camera, g_screen);
+    std::shared_ptr<Integrator> integrator;
+	integrator = std::make_shared<Integrator>(
+		camera, screen);
 
 	// Begin render
-	g_integrator->Render(g_scene, g_settings.numSamplesPerPixel);
+	integrator->Render(g_scene, g_settings.numSamplesPerPixel);
 }
 
 void InitSceneRandomBalls()
