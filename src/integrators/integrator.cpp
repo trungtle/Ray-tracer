@@ -38,20 +38,22 @@ public:
 
 	void operator()(const tbb::blocked_range<size_t>& range)
 	{
-         vec3 sum = _sumColor;
+         Spectrum sum = _sumColor;
          size_t end = range.end();
 
          uint32_t depth = 50;
          for (size_t i = range.begin(); i != end; i++)
          {
-             sum += m_integrator->Li(*m_scene, m_ray, depth);
+             Spectrum li = m_integrator->Li(*m_scene, m_ray, depth);
+             li.DeNaN();
+             sum += li;
          }
         
          _sumColor = sum;
 	}
 
 	SumColor(SumColor& other, tbb::split) : 
-        m_integrator(other.m_integrator), m_scene(other.m_scene), m_ray(other.m_ray), _sumColor(vec3(0, 0, 0))
+        m_integrator(other.m_integrator), m_scene(other.m_scene), m_ray(other.m_ray), _sumColor(0.0)
 	{}
 
 	void join(const SumColor& other)
@@ -67,10 +69,10 @@ public:
 			m_integrator(integrator),
 			m_scene(scene),
             m_ray(ray),
-			_sumColor(vec3(0, 0, 0))
+			_sumColor(0.0)
 	{}
 
-	vec3 _sumColor;
+	Spectrum _sumColor;
 };
 
 
@@ -101,12 +103,15 @@ void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
                         ray
                         );
 					parallel_reduce(tbb::blocked_range<size_t>(0, numSamplesPerPixel), sumColor);
-					vec3 color = sumColor._sumColor;
+					Spectrum color = sumColor._sumColor;
 					color /= float(numSamplesPerPixel);
 
 					// Gamma correction
-					color = glm::sqrt(color);
-					film[x][y] = color;
+                    color = Sqrt(color);
+                    float rgb[3];
+                    color.ToRGB(rgb);
+                    glm::vec3 vrgb(rgb[0], rgb[1], rgb[2]);
+					film[x][y] = vrgb;
 
 				}
 			}
@@ -149,22 +154,26 @@ void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
 	{
 		for (int x = 0; x < m_screen->width; x++)
 		{
-			vec3 color(0.0f, 0.0f, 0.0f);
+			Spectrum color(0.0f);
 			for (int n = 0; n < numSamplesPerPixel; n++)
 			{
 				vec2 uv = Sampler::RandomSampleFromPixel(x, y, m_screen->width, m_screen->height);
 				Ray r = m_camera->GetRay(uv);
-				color += Li(scene, r, 50);
+                Spectrum li = Li(scene, r, 50);
+                li.DeNaN();
+                color += li;
 			}
 
 			color /= float(numSamplesPerPixel);
 
 			// Gamma correction
-			color = glm::sqrt(color);
-
-			int ir = int(color.r * 255.99);
-			int ig = int(color.g * 255.99);
-			int ib = int(color.b * 255.99);
+            color = Sqrt(color);
+            float rgb[3];
+            color.ToRGB(rgb);
+            
+			int ir = int(rgb[0] * 255.99);
+			int ig = int(rgb[1] * 255.99);
+			int ib = int(rgb[2] * 255.99);
 
 			file << ir << " " << ig << " " << ib << "\n";
 		}
@@ -180,98 +189,106 @@ void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
 }
 
 
-glm::vec3 Integrator::Li(const Scene& scene, const Ray& r, int maxDepth) const
+Spectrum Integrator::Li(const Scene& scene, const Ray& r, int maxDepth) const
 {
-		uint32_t depth = 0;
-		Ray scatterRay = r;
-		vec3 accColor;
-		while(depth < maxDepth)
-		{
-			vec3 color;
-			Intersection intersect;
-			if (scene.Hit(scatterRay, 0.001, 10000.0f, intersect))
-			{
-				const Material* material = scene.materials[intersect.hit->materialId];
-				vec3 emitted = material->Emitted(intersect.UV, intersect.P);
+    uint32_t depth = 0;
+    Ray scatterRay = r;
+    Spectrum accColor(0.0);
+    while(depth < maxDepth)
+    {
+        Spectrum bounceColor(0.0);
+        Intersection intersect;
+        if (scene.Hit(scatterRay, 0.001, 10000.0f, intersect))
+        {
+            const Material* material = scene.materials[intersect.hit->materialId];
+            Spectrum emitted = material->Emitted(intersect.UV, intersect.P);
 
-				if (material->Scatter(r, intersect, scatterRay))
-				{
-					switch(material->type)
-					{
-						case Material::kDiffuse:
-						{
-							vec3 albedo = material->texture->value(intersect.UV, intersect.P);
-							Hitable* light = scene.lights[0];
-                            HitablePDF pdfLight(light, intersect.P);
-                            CosinePDF pdfCosine(intersect.N);
-							//UniformPDF pdfCosine(intersect.N);
-							MixturePDF pdfMix(&pdfLight, &pdfCosine);
-							
-							// DEBUG
-							// HitablePDF pdfMix(light, intersect.P);
-							// CosinePDF pdfMix(intersect.N);
-							//UniformPDF pdfMix(intersect.N);
-
-							vec3 scatteredDirection = pdfMix.Generate();
-							scatterRay = Ray(intersect.P, scatteredDirection, r.time);
-							float pdfVal = pdfMix.Value(scatterRay.direction);
-
-							float scatteringPdf = abs(dot(normalize(intersect.N), scatterRay.direction)) * INV_PI;
-                            float weight = pdfMix.Weight(scatterRay.direction);
-							color = albedo * scatteringPdf * weight / pdfCosine->Value(scatterRay.direction);
-
-							if (depth == 0)
-							{
-								accColor = color;							
-							}
-							else
-							{
-								accColor = accColor * color;
-							}
-
-							break;
-						}
-						case Material::kMetal:
-						{
-							vec3 albedo = material->texture->value(intersect.UV, intersect.P);
-							color = emitted + albedo;
-							accColor *= albedo;
-							break;
-						}
-						case Material::kDielectric:
-						{
-							break;
-						}
-						case Material::kLight:
-						default:
-						{
-							break;
-						}
-					}
-				}
-				else
-				{
-                    if (depth == 0 && material->type == Material::kLight)
+            if (material->Scatter(r, intersect, scatterRay))
+            {
+                switch(material->type)
+                {
+                    case Material::kDiffuse:
                     {
-                        return emitted;
-                    }
-                    else
-                    {
-                        accColor *= emitted;
+                        Spectrum albedo = material->texture->value(intersect.UV, intersect.P);
+                        Hitable* light = scene.lights[0];
+                        HitablePDF pdfLight(light, intersect.P);
+                        CosinePDF pdfCosine(intersect.N);
+                        //UniformPDF pdfCosine(intersect.N);
+                        //MixturePDF pdfMix(&pdfLight, &pdfCosine);
+                        
+                        // DEBUG
+                        // HitablePDF pdfMix(light, intersect.P);
+                        // CosinePDF pdfMix(intersect.N);
+                        UniformPDF pdfMix(intersect.N);
+
+                        vec3 scatteredDirection = pdfMix.Generate();
+                        scatterRay = Ray(intersect.P, scatteredDirection, r.time);
+                        float pdfVal = pdfMix.Value(scatterRay.direction);
+
+                        float scatteringPdf = abs(dot(normalize(intersect.N), scatterRay.direction)) * INV_PI;
+                        bounceColor = albedo * scatteringPdf / pdfVal;
+                        bounceColor = bounceColor.Clamp(0., 1.0f);
+                        
+                        if (depth == 0)
+                        {
+                            accColor = bounceColor;
+                        }
+                        else
+                        {
+                            accColor = accColor * bounceColor;
+                        }
+
                         break;
                     }
-				}
-			}
-			else
-			{
-				accColor *= Screen::SkyColor(r);
-				break;
-			}	
+                    case Material::kMetal:
+                    {
+                        Spectrum albedo = material->texture->value(intersect.UV, intersect.P);
+                        bounceColor = emitted + albedo;
+                        accColor *= albedo;
+                        break;
+                    }
+                    case Material::kDielectric:
+                    {
+                        break;
+                    }
+                    default:
+                    {
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                if (depth == 0)
+                {
+                    // Hit light source, just color it white
+                    accColor = emitted.Clamp(0., 1.0f);
+                    break;
+                }
+                else
+                {
+                    accColor *= emitted;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            if (depth == 0)
+            {
+                accColor = Screen::SkyColor(r);
+            }
+            else
+            {
+                accColor *= Screen::SkyColor(r);
+                
+            }
+            
+            break;
+        }
 
-			depth++;	
-		}
-
-
-		accColor = deNaN(accColor);
-		return accColor;		
+        depth++;
+    }
+    
+    return accColor;
 }

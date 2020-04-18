@@ -8,28 +8,30 @@
 
 #include "stb_image.h"
 
+#include "spectrum/spectrum.h"
+
 using namespace glm;
 
 class Texture
 {
 public:
-	virtual vec3 value(const vec2& uv, const vec3& point) const = 0;
+	virtual Spectrum value(const vec2& uv, const vec3& point) const = 0;
 };
 
 class ConstantTexture : public Texture
 {
 public:
-	ConstantTexture(const vec3& c) : color(c)
+	ConstantTexture(const Spectrum& c) : color(c)
 	{
 
 	}
 
-	virtual vec3 value(const vec2& uv, const vec3& point) const override
+	virtual Spectrum value(const vec2& uv, const vec3& point) const override
 	{
 		return color;
 	}
 
-	vec3 color;
+	Spectrum color;
 };
 
 class CheckerTexture : public Texture
@@ -40,7 +42,7 @@ public:
 
 	}
 
-	virtual vec3 value(const vec2& uv, const vec3& point) const override
+	virtual Spectrum value(const vec2& uv, const vec3& point) const override
 	{
 		float freq = 10;
 		float sines = sin(freq * point.x) * sin(freq * point.y) * sin(freq * point.z);
@@ -73,16 +75,18 @@ public:
 		memcpy(&pixels[0], data, size);
 	}
 
-	virtual vec3 value(const vec2& uv, const vec3& point) const override
+	virtual Spectrum value(const vec2& uv, const vec3& point) const override
 	{
 		int x = uv.x * width;
 		int y = uv.y * height;
 		x = clamp(x, 0, width - 1);
 		y = clamp(y, 0, height - 1);
 		float r = int(pixels[channels * x + channels * width * y]) / 255.0f;
-		float b = int(pixels[channels * x + channels * width * y + 1]) / 255.0f;
-		float g = int(pixels[channels * x + channels * width * y + 2]) / 255.0f;
-		return vec3(r, b, g);
+		float g = int(pixels[channels * x + channels * width * y + 1]) / 255.0f;
+		float b = int(pixels[channels * x + channels * width * y + 2]) / 255.0f;
+        
+        Spectrum value(r, g, b);
+		return value;
 
 	}
 

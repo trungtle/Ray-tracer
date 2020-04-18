@@ -17,6 +17,7 @@
 #include "lights/diffuse_light.h"
 #include "samplers/sampler.h"
 #include "screen/screen.h"
+#include "spectrum/spectrum.h"
 
 #define REPORT 1
 
@@ -77,11 +78,11 @@ void InitSceneRandomBalls()
 	g_settings.focusDist = length(g_settings.lookAt - g_settings.lookFrom);
 
 	// Scene
-	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.3, 0.7))));
-	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.2))));
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.6, 0.2)), 0.3));
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.8, 0.8)), 1.0));
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.4, 0.6, 0.2)), 1.0));
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(0.2, 0.3, 0.7))));
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(0.7, 0.2, 0.2))));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.8, 0.6, 0.2)), 0.3));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.8, 0.8, 0.8)), 1.0));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.4, 0.6, 0.2)), 1.0));
 	g_scene.materials.emplace_back(new DielectricMaterial(2.5));
 	g_scene.materials.emplace_back(new DielectricMaterial(1.2));
 
@@ -124,18 +125,18 @@ void InitSceneMovingBalls()
 	g_scene.materials.emplace_back(
 		new LambertianMaterial(
 			new CheckerTexture(
-				new ConstantTexture(vec3(0.2, 0.3, 0.7)), 
-				new ConstantTexture(vec3(0.8, 0.8, 0.8))
+				new ConstantTexture(Spectrum(0.2, 0.3, 0.7)),
+				new ConstantTexture(Spectrum(0.8, 0.8, 0.8))
 			)
 		));
-	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.2))));
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.6, 0.2)), 0));
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.8, 0.8)), 0));
-	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.8, 0.2))));
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.4, 0.6)), 0.0));
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.8))));
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(0.7, 0.2, 0.2))));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.8, 0.6, 0.2)), 0));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.8, 0.8, 0.8)), 0));
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(0.2, 0.8, 0.2))));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.8, 0.4, 0.6)), 0.0));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.7, 0.2, 0.8))));
 	g_scene.materials.emplace_back(new DielectricMaterial(1.2));
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.2, 0.8, 0.2)), 0.2));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.2, 0.8, 0.2)), 0.2));
 
 
 	// Ground
@@ -202,8 +203,8 @@ void InitUniverseScene()
 	g_scene.materials.emplace_back(
 		new LambertianMaterial(
 			new CheckerTexture(
-				new ConstantTexture(vec3(0.2, 0.3, 0.7)), 
-				new ConstantTexture(vec3(0.8, 0.8, 0.8))
+				new ConstantTexture(Spectrum(0.2, 0.3, 0.7)),
+				new ConstantTexture(Spectrum(0.8, 0.8, 0.8))
 			)
 		));
 	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/earth.png")));
@@ -213,7 +214,7 @@ void InitUniverseScene()
 	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/jupiter.jpg")));
 	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/pluto.png")));
 
-	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(0.9f, 0.9f, 0.7f))));
+	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(Spectrum(0.9f, 0.9f, 0.7f))));
 
 	float earthRadius = 0.45;
 	float mercuryRadius = earthRadius / 3.0f;
@@ -259,32 +260,32 @@ void InitCornellBox()
 	g_scene.materials.emplace_back(
 		new LambertianMaterial(
 			new CheckerTexture(
-				new ConstantTexture(vec3(0.2, 0.3, 0.7)), 
-				new ConstantTexture(vec3(0.8, 0.8, 0.8))
+				new ConstantTexture(Spectrum(0.2, 0.3, 0.7)),
+				new ConstantTexture(Spectrum(0.8, 0.8, 0.8))
 			)
 		));
-	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(1, 1, 1)))); // white
-	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.2, 0.7)))); // blue
-	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.2)))); // red
-	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.7, 0.2)))); // green
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(1, 1, 1)))); // white
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(0.2, 0.2, 0.7)))); // blue
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(0.7, 0.2, 0.2)))); // red
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(0.2, 0.7, 0.2)))); // green
 	g_scene.materials.emplace_back(new MetalMaterial(new ImageTexture("data/mars.png"), 0.2)); //5
 	g_scene.materials.emplace_back(new DielectricMaterial(1.2));//6
 	g_scene.materials.emplace_back(new MetalMaterial(new ImageTexture("data/mercury.png"), 0.2));//7
 	g_scene.materials.emplace_back(new MetalMaterial(new ImageTexture("data/venus.jpg"), 0.2));//8
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.7, 0.2)), 0.2));//9
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.8, 0.7, 0.2)), 0.2));//9
 	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/jupiter.jpg"))); //10
 	g_scene.materials.emplace_back(new LambertianMaterial(new ImageTexture("data/pluto.png"))); //11
 
 
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.6, 0.2)), 0));//12
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.8, 0.6, 0.2)), 0));//12
 	g_scene.materials.emplace_back(new MetalMaterial(new ImageTexture("data/mercury.png"), 0.4));//13
-	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.8, 0.2))));
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.4, 0.6)), 0.0));
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.8))));
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(0.2, 0.8, 0.2))));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.8, 0.4, 0.6)), 0.0));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.7, 0.2, 0.8))));
 	g_scene.materials.emplace_back(new DielectricMaterial(1.2));
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.2, 0.8, 0.2)), 0.2));
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.2, 0.8, 0.2)), 0.2));
 	
-	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(4.f, 4.f, 4.f))));
+	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(Spectrum(4.f, 4.f, 4.f))));
 
 	// Room
 	float roomWidth = 5;
@@ -404,14 +405,14 @@ void InitCornellBoxMCIntegration()
 	g_settings.nx = 400;
 	g_settings.ny = 400;
 	g_settings.raytracingDepth = 50;
-	g_settings.numSamplesPerPixel = 400;
+	g_settings.numSamplesPerPixel = 40;
 	g_settings.lookFrom = vec3(0, 5, 14.9);
 	g_settings.lookAt = vec3(0, 5, -1);
 	// Head pbrt
 	// g_settings.lookFrom = vec3(0.322839 , 0.0534825, 0.504299);
 	// g_settings.lookAt = vec3(-0.140808, -0.162727, -0.354936);
 	// Up: 0.0355799 0.964444 -0.261882
-	g_settings.vfov = 50;
+	g_settings.vfov = 60;
 	g_settings.aspect = float(g_settings.nx) / float(g_settings.ny);
 	g_settings.aperture = 0.01f;
 	g_settings.focusDist = length(g_settings.lookAt - g_settings.lookFrom);
@@ -420,20 +421,20 @@ void InitCornellBoxMCIntegration()
 	g_scene.materials.emplace_back(
 		new LambertianMaterial(
 			new CheckerTexture(
-				new ConstantTexture(vec3(0.2, 0.3, 0.7)), 
-				new ConstantTexture(vec3(0.8, 0.8, 0.8))
+				new ConstantTexture(Spectrum(0.2, 0.3, 0.7)),
+				new ConstantTexture(Spectrum(0.8, 0.8, 0.8))
 			)
 		));
-	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(1, 1, 1)))); // white
-	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.2, 0.7)))); // blue
-	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.7, 0.2, 0.2)))); // red
-	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.7, 0.2)))); // green
-	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(vec3(0.2, 0.7, 0.2)))); // green
-	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(vec3(0.8, 0.8, 0.8)), 1.0));
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(1, 1, 1)))); // white
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(0.2, 0.2, 0.7)))); // blue
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(0.7, 0.2, 0.2)))); // red
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(0.2, 0.7, 0.2)))); // green
+	g_scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(0.2, 0.7, 0.2)))); // green
+	g_scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.8, 0.8, 0.8)), 1.0));
 	g_scene.materials.emplace_back(new DielectricMaterial(2.5));
 	g_scene.materials.emplace_back(new DielectricMaterial(1.2));
 
-	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(vec3(10.f, 10.f, 10.f))));
+	g_scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(Spectrum(10.f, 10.f, 10.f))));
 
 	// Room
 	float roomWidth = 5;
@@ -471,9 +472,9 @@ void InitCornellBoxMCIntegration()
 
 	//Hitable* triange = new Triangle(vec3(-1.5, 0, -1.5), vec3(1.5, 0, -1.5), vec3(0, 5, -1.5), 2);
 	//g_scene.objects.emplace_back(triange);
-	// Hitable* mesh = new mi::Mesh("../data/models/gltf/Duck/glTF/Duck.gltf", 1);
+	//Hitable* mesh = new mi::Mesh("../data/models/gltf/Duck/glTF/Duck.gltf", 1);
 	//Hitable* mesh = new mi::Mesh("../data/pbrt-v3-pbf/head.pbf", 3);
-	// g_scene.objects.emplace_back(mesh);
+    //g_scene.objects.emplace_back(mesh);
 
 	// Light
 	Hitable* ceilingLight = new FlipNormal(new RectXZ(vec2(-1, -1), vec2(1, 1), roomWidth * 2 - 0.01f, g_scene.materials.size() - 1));

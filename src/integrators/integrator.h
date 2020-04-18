@@ -4,6 +4,8 @@
 #include <glm/glm.hpp>
 #include <memory>
 
+#include "spectrum/spectrum.h"
+
 class Camera;
 class Ray;
 class Scene;
@@ -27,7 +29,7 @@ public:
 	void Render(const Scene& scene, uint32_t numSamplesPerPixel);
 
 
-	glm::vec3 Li(const Scene& scene, const Ray& r, int maxDepth) const;
+	Spectrum Li(const Scene& scene, const Ray& r, int maxDepth) const;
 };
 
 #endif

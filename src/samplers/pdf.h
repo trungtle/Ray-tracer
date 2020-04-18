@@ -129,7 +129,7 @@ public:
     }
     
     // Should have better result than using the balance heuristic
-    static float PowerHeuristic(int nf, loat fPdf, int ng, float gPdf)
+    static float PowerHeuristic(int nf, float fPdf, int ng, float gPdf)
     {
         float f = nf * fPdf, g = g * gPdf;
         return (f * f) / (f * f + g * g);

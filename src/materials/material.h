@@ -6,6 +6,7 @@
 #include "ray/ray.h"
 #include "samplers/sampler.h"
 #include "shapes/intersection.h"
+#include "spectrum/spectrum.h"
 #include "textures/texture.h"
 #include "transform/onb.h"
 
@@ -54,9 +55,9 @@ public:
 	};
 
 	virtual bool Scatter(const Ray& ray, const Intersection& intersect, Ray& scatterRay) const = 0;
-	virtual vec3 Emitted(const vec2& uv, const vec3& point) const
+	virtual Spectrum Emitted(const vec2& uv, const vec3& point) const
 	{
-		return vec3(0);
+		return Spectrum(0.0);
 	}
 	Texture* texture;
 	EType type;

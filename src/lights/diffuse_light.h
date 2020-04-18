@@ -15,7 +15,7 @@ public:
 	{
 		return false;
 	}
-	virtual vec3 Emitted(const vec2& uv, const vec3& point) const override
+	virtual Spectrum Emitted(const vec2& uv, const vec3& point) const override
 	{
 		return emit->value(uv, point);
 	}
