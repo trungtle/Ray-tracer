@@ -20,7 +20,7 @@ public:
 		name = "RectXY";
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const
 	{
 		float t = (_z - ray.origin.z) / ray.direction.z;
 		if (t > tmin && t < tmax)
@@ -74,7 +74,7 @@ public:
 		name = "RectXZ";
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const
 	{
 		float t = (_y - ray.origin.y) / ray.direction.y;
 		if (t > tmin && t < tmax)
@@ -102,7 +102,7 @@ public:
 
 	virtual float PdfValue(const vec3& origin, const vec3& direction) const override
 	{
-		Intersection isect;
+		Interaction isect;
 		if (this->Hit(Ray(origin, direction), 0, FLT_MAX, isect))
 		{
 			float area = (_max.x - _min.x) * (_max.y - _min.y);
@@ -152,7 +152,7 @@ public:
 		name = "RectYZ";
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const
 	{
 		float t = (_x - ray.origin.x) / ray.direction.x;
 		if (t > tmin && t < tmax)

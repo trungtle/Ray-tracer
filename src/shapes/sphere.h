@@ -24,7 +24,7 @@ public:
 #endif
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const
 	{
 		// Sphere equation
 		// (x - cx)^2 + (y - cy)^2 + (z - cz)^2 = R^2

@@ -18,7 +18,7 @@ public:
 		materialId = mId;
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const override
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const override
 	{
 		// Disk equation:
 		// x^2 + z^2 = r^2 at height y

@@ -17,6 +17,15 @@ using namespace std;
 class Hitable;
 class AABB;
 
+struct Interaction
+{	
+	float t;
+	vec3 P;
+	vec3 N;
+	vec2 UV;
+	const Hitable* hit;
+};
+
 class Hitable
 {
 public:

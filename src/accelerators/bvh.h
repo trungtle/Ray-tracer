@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "accelerators/AABB.h"
+#include "core/interaction.h"
 #include "samplers/sampler.h"
 #include "shapes/Intersection.h"
 
@@ -82,14 +83,14 @@ public:
 		aabb = AABB::Combine(boxLeft, boxRight);
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const
 	{
 		if (aabb.Hit(ray, tmin, tmax))
 		{
-			Intersection leftIntersect;
+			Interaction leftIntersect;
 			bool hitLeft = left ? left->Hit(ray, tmin, tmax, leftIntersect) : false;
 
-			Intersection rightIntersect;
+			Interaction rightIntersect;
 			bool hitRight = right ? right->Hit(ray, tmin, tmax, rightIntersect) : false;
 
 			if (hitLeft && hitRight)

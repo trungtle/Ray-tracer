@@ -54,7 +54,7 @@ public:
 		kLight
 	};
 
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, Ray& scatterRay) const = 0;
+	virtual bool Scatter(const Ray& ray, const Interaction& intersect, Ray& scatterRay) const = 0;
 	virtual Spectrum Emitted(const vec2& uv, const vec3& point) const
 	{
 		return Spectrum(0.0);
@@ -72,7 +72,7 @@ public:
 		type = kDiffuse;
 	}
 
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, Ray& scatterRay) const override
+	virtual bool Scatter(const Ray& ray, const Interaction& intersect, Ray& scatterRay) const override
 	{
 		// Scatter toward a random point inside a unit sphere tangent to the point of intersection.
 		// vec3 newTarget = intersect.P + intersect.N + Sampler::RandomSampleInUnitSphere();
@@ -99,7 +99,7 @@ public:
 		type = kMetal;
 	}
 
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, Ray& scatterRay) const
+	virtual bool Scatter(const Ray& ray, const Interaction& intersect, Ray& scatterRay) const
 	{
 		// scatter ray reflect around the surface normal of the intersection point.
 		vec3 reflected = Reflect(ray.direction, intersect.N);
@@ -121,7 +121,7 @@ public:
 		type = kDielectric;
 	}
 
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, Ray& scatterRay) const
+	virtual bool Scatter(const Ray& ray, const Interaction& intersect, Ray& scatterRay) const
 	{
 		vec3 outwardNormal;
 		float ni_over_nt;
@@ -170,7 +170,7 @@ class IsotropicMaterial : public Material
 public:
 	IsotropicMaterial(Texture* albedo) : m_albedo(albedo) {}
 
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, Ray& scatterRay) const override
+	virtual bool Scatter(const Ray& ray, const Interaction& intersect, Ray& scatterRay) const override
 	{
 		scatterRay = Ray(intersect.P, Sampler::RandomSampleInUnitSphere());
 		return true;

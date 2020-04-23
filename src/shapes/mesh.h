@@ -33,7 +33,7 @@ public:
 
 	virtual ~Mesh();
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const override;
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const override;
 
 	virtual bool BoundingBox(AABB& aabb) const override
 	{

@@ -143,7 +143,7 @@ Spectrum Integrator::Li(const Scene& scene, const Ray& r, int maxDepth) const
     while(depth < maxDepth)
     {
         Spectrum bounceColor(0.0);
-        Intersection intersect;
+        Interaction intersect;
         if (scene.Hit(scatterRay, 0.001, 10000.0f, intersect))
         {
             const Material* material = scene.materials[intersect.hit->materialId];
@@ -172,7 +172,7 @@ Spectrum Integrator::Li(const Scene& scene, const Ray& r, int maxDepth) const
                         float pdfVal = pdfMix.Value(scatterRay.direction);
 
                         float scatteringPdf = abs(dot(normalize(intersect.N), scatterRay.direction)) * INV_PI;
-                        bounceColor = albedo * scatteringPdf / pdfVal;
+                        bounceColor = albedo * (scatteringPdf / glm::max(pdfVal, 0.0001f));
                         bounceColor = bounceColor.Clamp(0., 1.0f);
                         
                         if (depth == 0)

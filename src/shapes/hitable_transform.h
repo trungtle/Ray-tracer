@@ -11,7 +11,7 @@ public:
 		name = "FlipNormal, " + hitable->name;
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const
 	{
 		if (hitable->Hit(ray, tmin, tmax, intersect))
 		{
@@ -48,7 +48,7 @@ public:
 		name = "Translate, " + hitable->name;
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const
 	{
 		Ray transformedRay = ray.GetCopyTransformed(-offset);	
 		if (hitable->Hit(transformedRay, tmin, tmax, intersect))
@@ -123,7 +123,7 @@ public:
 		bbox = AABB(_min, _max);
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const
 	{
 		// Transform ray into local space
 		vec3 origin = ray.origin;

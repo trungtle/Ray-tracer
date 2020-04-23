@@ -38,7 +38,7 @@ public:
 		name = "Box";
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const
 	{
 		return faces->Hit(ray, tmin, tmax, intersect);
 	}

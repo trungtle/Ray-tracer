@@ -6,6 +6,7 @@
 
 #include "camera/Camera.h"
 #include "integrators/integrator.h"
+#include "integrators/vol_path_integrator.h"
 #include "shapes/box.h"
 #include "shapes/cylinder.h"
 #include "shapes/hitable_transform.h"
@@ -407,7 +408,7 @@ void InitCornellBoxMCIntegration(Scene& scene)
 	g_settings.nx = 400;
 	g_settings.ny = 400;
 	g_settings.raytracingDepth = 50;
-	g_settings.numSamplesPerPixel = 40;
+	g_settings.numSamplesPerPixel = 140;
 	g_settings.lookFrom = vec3(0, 5, 14.9);
 	g_settings.lookAt = vec3(0, 5, -1);
 	// Head pbrt
@@ -475,6 +476,9 @@ void InitCornellBoxMCIntegration(Scene& scene)
 	//Hitable* triange = new Triangle(vec3(-1.5, 0, -1.5), vec3(1.5, 0, -1.5), vec3(0, 5, -1.5), 2);
 	//scene.objects.emplace_back(triange);
 	//Hitable* mesh = new mi::Mesh("../data/models/gltf/Duck/glTF/Duck.gltf", 1);
+	Hitable* mesh = new Translate(
+		new mi::Mesh("../data/models/gltf/Cube/glTF/Cube.gltf", 1),
+		vec3(1, 1, 0));
 	//Hitable* mesh = new mi::Mesh("../data/pbrt-v3-pbf/head.pbf", 3);
     //scene.objects.emplace_back(mesh);
 

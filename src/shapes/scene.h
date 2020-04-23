@@ -16,7 +16,7 @@ using namespace std;
 class Scene : public Hitable
 {
 public:
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const
 	{
 #if USE_ACCELERATION_STRUCTURE
 		bool hit = root->Hit(ray, tmin, tmax, intersect);		

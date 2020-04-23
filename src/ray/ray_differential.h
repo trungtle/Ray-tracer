@@ -3,7 +3,7 @@
 
 #include "ray/ray.h"
 
-#include "shapes/point.h"
+#include "core/point.h"
 
 class RayDifferential : public Ray
 {

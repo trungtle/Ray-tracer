@@ -28,7 +28,7 @@ public:
 
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const override
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const override
 	{
 		// Cylinder equation is x^2 + z^2 - r^2 = 0
 		// 
@@ -131,7 +131,7 @@ public:
 		name = "CappedCylinder";
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const
 	{
 		return scene->Hit(ray, tmin, tmax, intersect);
 	}

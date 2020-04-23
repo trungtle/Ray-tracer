@@ -11,7 +11,7 @@ public:
 	{
 		type = kLight;
 	}
-	virtual bool Scatter(const Ray& ray, const Intersection& intersect, Ray& scatterRay) const override
+	virtual bool Scatter(const Ray& ray, const Interaction& intersect, Ray& scatterRay) const override
 	{
 		return false;
 	}

@@ -28,7 +28,7 @@ public:
 		const vec3& p2,
 		float tmin, 
 		float tmax, 
-		Intersection& intersect
+		Interaction& intersect
 		)
 	{
 		// Moller-Trumbore fast ray-triangle intersection
@@ -57,7 +57,7 @@ public:
 		return true;
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const override
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const override
 	{
 		bool result = RayTriangleIntersect(
 			ray, 

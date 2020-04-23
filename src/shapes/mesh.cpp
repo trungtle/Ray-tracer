@@ -43,19 +43,17 @@ std::string FileExtension(const std::string &FileName) {
  	return "";
 }
 
-bool mi::Mesh::Hit(const Ray& ray, float tmin, float tmax, Intersection& intersect) const
+bool mi::Mesh::Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const
 {
 	bool isHit = false;
 	float minT = 1000000;
 	for (size_t i = 0; i < m_indices.size(); i+=3)
 	{
-		if (i / 3 > 10950) break;
-		
 		const vec3& p0 = m_positions[i * 3];
 		const vec3& p1 = m_positions[i * 3 + 1];
 		const vec3& p2 = m_positions[i * 3 + 2];
 
-		Intersection triIsect;
+		Interaction triIsect;
 		if (Triangle::RayTriangleIntersect(
 			ray, 
 			p0, 
@@ -67,6 +65,7 @@ bool mi::Mesh::Hit(const Ray& ray, float tmin, float tmax, Intersection& interse
 			)
 		{
 			isHit = true;
+			intersect.hit = this;
 			if (triIsect.t < minT)
 			{
 				minT = triIsect.t;
@@ -156,11 +155,11 @@ void mi::Mesh::LoadFromFile(const std::string& file)
 	ParseModel(model);
 
 	// Compute bbox
-	// for (auto& pos : m_positions)
-	// {
-	// 	m_aabb._min = glm::min(pos, m_aabb._min);
-	// 	m_aabb._max = glm::max(pos, m_aabb._max);
-	// }
+	for (auto& pos : m_positions)
+	{
+		m_aabb._min = glm::min(pos, m_aabb._min);
+		m_aabb._max = glm::max(pos, m_aabb._max);
+	}
 }
 
 mi::Mesh::~Mesh()
