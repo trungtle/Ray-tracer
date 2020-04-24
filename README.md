@@ -47,13 +47,18 @@ Assortments of ray-objects intersection, with 2 different lighting scenarios:
 ![Render](images/CornellBox1.png "Cornell box")
 ![Render](images/cornellbox_800.png "Cornell box")
 
-# Importance sampling
+# Uniform sampling
 
-![Render](images/Sampling_Uniform_1000sp.jpg "Uniform sampling")
+![Render](images/Sampling_Uniform_100sp.jpg "Uniform sampling")
+
+# Homogeneous media
+
+![Render](images/homogeneous_media.jpg "Homogeneous media")
+
 
 # Credit:
 - [Physically based rendering](http://www.pbr-book.org/) by Matt Pharr, Wenzel Jakob, and Greg Humphreys
-- Initial code started from ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) by [Peter Shirley](https://twitter.com/Peter_shirley).
+- Code based from ["Ray Tracing in One Weekend"](http://in1weekend.blogspot.com/) by [Peter Shirley](https://twitter.com/Peter_shirley).
 - stb_image library: https://github.com/nothings/stb
 - tbb: https://www.threadingbuildingblocks.org/
 - Pluto texture: https://planet-texture-maps.fandom.com/wiki/Pluto
