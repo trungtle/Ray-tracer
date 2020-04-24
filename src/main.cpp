@@ -399,9 +399,9 @@ void InitCornellBox(Scene& scene)
 
 void InitCornellBoxMCIntegration(Scene& scene)
 {
-	g_settings.nx = 800;
-	g_settings.ny = 800;
-	g_settings.numSamplesPerPixel = 400;
+	g_settings.nx = 400;
+	g_settings.ny = 400;
+	g_settings.numSamplesPerPixel = 100;
 	g_settings.lookFrom = vec3(0, 5, 14.9);
 	g_settings.lookAt = vec3(0, 5, -1);
 	// Head pbrt
@@ -431,6 +431,7 @@ void InitCornellBoxMCIntegration(Scene& scene)
     scene.materials.emplace_back(new DielectricMaterial(1.2));
 	scene.materials.emplace_back(new IsotropicMaterial(new ConstantTexture(Spectrum(1.0))));
     scene.materials.emplace_back(new IsotropicMaterial(new ConstantTexture(Spectrum(0.0))));
+    scene.materials.emplace_back(new LambertianMaterial(new PerlinNoiseTexture()));
 
 	//scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(Spectrum(10.f, 10.f, 10.f))));
     // Dim light
@@ -439,7 +440,9 @@ void InitCornellBoxMCIntegration(Scene& scene)
 	// Room
 	float roomWidth = 5;
 	float roomDepth = 15;
-	Hitable* roomFloor = new RectXZ(vec2(-roomWidth, -roomDepth), vec2(roomWidth, roomDepth), 0, 1);
+	Hitable* roomFloor = new Translate(
+		new RectXZ(vec2(-roomWidth, -roomDepth), vec2(roomWidth, roomDepth), 0, 1), 
+		vec3(0, 0.0f, 0));
 	Hitable* ceiling = new FlipNormal(new RectXZ(vec2(-roomWidth, -roomDepth), vec2(roomWidth, roomDepth), roomWidth * 2 - 0.001f, 1));
 	Hitable* wallBack = new RectXY(vec2(-roomWidth, 0), vec2(roomWidth, roomWidth * 2), -roomWidth + 0.001f, 1);
 	Hitable* wallFront = new FlipNormal(new RectXY(vec2(-roomWidth, 0), vec2(roomWidth, roomWidth * 2), roomDepth, 1));
@@ -466,16 +469,12 @@ void InitCornellBoxMCIntegration(Scene& scene)
 		20), // angle 
 		vec3(-2.5, 0, 1.5));
 	
-	Hitable* sphere = 
-		// new Box(vec3(-5, 0, -5), vec3(5, 5, 5), 6),
-		new Sphere(vec3(0, 5, 0), 1.5f, 6);
-
 	//Hitable* triange = new Triangle(vec3(-1.5, 0, -1.5), vec3(1.5, 0, -1.5), vec3(0, 5, -1.5), 2);
 	//scene.objects.emplace_back(triange);
 	//Hitable* mesh = new mi::Mesh("../data/models/gltf/Duck/glTF/Duck.gltf", 1);
 	//Hitable* mesh = new Translate(
 	//	new mi::Mesh("../data/models/gltf/Cube/glTF/Cube.gltf", 1),
-	//	vec3(1, 1, 0));
+	//	vec3(0, 1, 0));
 	//Hitable* mesh = new mi::Mesh("../data/pbrt-v3-pbf/head/head.pbf", 3);
     //Hitable* mesh = new mi::Mesh("../data/pbrt-v3-pbf/pbrt-book/book.pbf", 3);
     //scene.objects.emplace_back(mesh);
@@ -494,6 +493,9 @@ void InitCornellBoxMCIntegration(Scene& scene)
         10);
     scene.objects.emplace_back(constantMedium2);
     
+    Hitable* sphere = new Sphere(vec3(0, 5, 0), 1.5f, 11);
+    scene.objects.emplace_back(sphere);
+
 	// Light
 	//Hitable* ceilingLight = new FlipNormal(new RectXZ(vec2(-1, -1), vec2(1, 1), roomWidth * 2 - 0.01f, scene.materials.size() - 1));
     // Larger light
@@ -503,8 +505,6 @@ void InitCornellBoxMCIntegration(Scene& scene)
 
 	// scene.objects.emplace_back(box1);
 	// scene.objects.emplace_back(box2);
-	// scene.objects.emplace_back(sphere);
-	
 }
 
 void InitPBRTScene(Scene& scene)

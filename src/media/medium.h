@@ -48,6 +48,9 @@ public:
 
 	}
 
+    /** Ray has a random change of making it all the way through,
+     *  depending on the density
+     */
 	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& interaction) const
 	{
         const bool enableDebug = false;
@@ -60,6 +63,8 @@ public:
             return false;
         }
         
+        // Once existed the boundary, we don't reconsider
+        // N.B: This doesn't work for concave objects
         if (!m_pBoundary->Hit(ray, interact1.t + 0.0001, INFINITY, interact2))
         {
             return false;

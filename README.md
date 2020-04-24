@@ -55,6 +55,10 @@ Assortments of ray-objects intersection, with 2 different lighting scenarios:
 
 ![Render](images/homogeneous_media.png "Homogeneous media")
 
+# Perline noise texture
+
+![Render](images/perlin_noise.png "Perlin Noise texture")
+
 
 # Credit:
 - [Physically based rendering](http://www.pbr-book.org/) by Matt Pharr, Wenzel Jakob, and Greg Humphreys

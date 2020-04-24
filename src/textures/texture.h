@@ -8,6 +8,7 @@
 
 #include "stb_image.h"
 
+#include "noise/perlin.h"
 #include "spectrum/spectrum.h"
 
 using namespace glm;
@@ -58,6 +59,18 @@ public:
 
 	Texture* color1;
 	Texture* color2;
+};
+
+class PerlinNoiseTexture : public Texture
+{
+public:
+    virtual Spectrum value(const vec2& uv, const vec3& point) const override
+    {
+        float scale = 10.0f;
+       // return Spectrum(Perlin::Noise(scale * point.x, scale * point.y, scale * point.z));
+        return Spectrum(Perlin::Turbulence(point));
+    }
+    
 };
 
 class ImageTexture : public Texture
