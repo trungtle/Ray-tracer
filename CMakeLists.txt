@@ -92,6 +92,7 @@ endif()
 # Add source files you want to compile (.cpp)
 set(CORE_SRC
         src/main.cpp
+        src/core/scene.cpp
         src/integrators/integrator.cpp
         src/samplers/sampler.cpp
         src/shapes/mesh.cpp

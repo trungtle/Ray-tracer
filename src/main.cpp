@@ -5,14 +5,15 @@
 #include <memory>
 
 #include "camera/Camera.h"
+#include "core/scene.h"
 #include "integrators/integrator.h"
 #include "integrators/vol_path_integrator.h"
+#include "media/medium.h"
 #include "shapes/box.h"
 #include "shapes/cylinder.h"
 #include "shapes/hitable_transform.h"
 #include "shapes/rectangle.h"
 #include "shapes/triangle.h"
-#include "shapes/scene.h"
 #include "shapes/sphere.h"
 #include "shapes/mesh.h"
 #include "lights/diffuse_light.h"
@@ -29,7 +30,6 @@ struct
 {
 	int nx = 64;
 	int ny = 64;
-	int raytracingDepth;
 	int numSamplesPerPixel;
 	vec3 lookFrom;
 	vec3 lookAt;
@@ -40,17 +40,16 @@ struct
 
 } g_settings;
 
-void RenderFullscreen(const Scene& scene)
+void RenderFullscreen(Scene& scene)
 {
 	// Screen
     std::shared_ptr<Screen> screen;
 	screen = std::make_shared<Screen>(g_settings.nx, g_settings.ny);
     
-    Film film(g_settings.nx, g_settings.ny, "image.ppm");
-    
+    Film film(g_settings.nx, g_settings.ny, "image.ppm");    
+
 	// Camera
-    std::shared_ptr<Camera> camera;
-	camera = std::make_shared<Camera>(
+	scene.camera = std::make_shared<Camera>(
 		g_settings.lookFrom, 
 		g_settings.lookAt, 
 		g_settings.vfov, 
@@ -62,8 +61,7 @@ void RenderFullscreen(const Scene& scene)
 
 	// Integrator
     std::shared_ptr<Integrator> integrator;
-	integrator = std::make_shared<Integrator>(
-		camera, screen);
+	integrator = std::make_shared<Integrator>(screen);
 
 	// Begin render
 	integrator->Render(scene, g_settings.numSamplesPerPixel);
@@ -71,7 +69,6 @@ void RenderFullscreen(const Scene& scene)
 
 void InitSceneRandomBalls(Scene& scene)
 {
-	g_settings.raytracingDepth = 50;
 	g_settings.numSamplesPerPixel = 100;
 	g_settings.lookFrom = vec3(-3, 0.3, 1.5);
 	g_settings.lookAt = vec3(0, 0, 0);
@@ -115,7 +112,6 @@ void InitSceneRandomBalls(Scene& scene)
 
 void InitSceneMovingBalls(Scene& scene)
 {
-	g_settings.raytracingDepth = 50;
 	g_settings.numSamplesPerPixel = 100;
 	g_settings.lookFrom = vec3(0, 0, 3);
 	g_settings.lookAt = vec3(0, 0, 0);
@@ -193,7 +189,6 @@ void InitSceneMovingBalls(Scene& scene)
 
 void InitUniverseScene(Scene& scene)
 {
-	g_settings.raytracingDepth = 50;
 	g_settings.numSamplesPerPixel = 100;
 	g_settings.lookFrom = vec3(0, 0, 12);
 	g_settings.lookAt = vec3(0, 0, -1);
@@ -250,7 +245,6 @@ void InitUniverseScene(Scene& scene)
 
 void InitCornellBox(Scene& scene)
 {
-	g_settings.raytracingDepth = 50;
 	g_settings.numSamplesPerPixel = 300;
 	g_settings.lookFrom = vec3(0, 5, 14);
 	g_settings.lookAt = vec3(0, 5, -1);
@@ -405,17 +399,16 @@ void InitCornellBox(Scene& scene)
 
 void InitCornellBoxMCIntegration(Scene& scene)
 {
-	g_settings.nx = 400;
-	g_settings.ny = 400;
-	g_settings.raytracingDepth = 50;
-	g_settings.numSamplesPerPixel = 140;
+	g_settings.nx = 800;
+	g_settings.ny = 800;
+	g_settings.numSamplesPerPixel = 400;
 	g_settings.lookFrom = vec3(0, 5, 14.9);
 	g_settings.lookAt = vec3(0, 5, -1);
 	// Head pbrt
 	// g_settings.lookFrom = vec3(0.322839 , 0.0534825, 0.504299);
 	// g_settings.lookAt = vec3(-0.140808, -0.162727, -0.354936);
 	// Up: 0.0355799 0.964444 -0.261882
-	g_settings.vfov = 60;
+	g_settings.vfov = 50;
 	g_settings.aspect = float(g_settings.nx) / float(g_settings.ny);
 	g_settings.aperture = 0.01f;
 	g_settings.focusDist = length(g_settings.lookAt - g_settings.lookFrom);
@@ -435,9 +428,13 @@ void InitCornellBoxMCIntegration(Scene& scene)
 	scene.materials.emplace_back(new LambertianMaterial(new ConstantTexture(Spectrum(0.2, 0.7, 0.2)))); // green
 	scene.materials.emplace_back(new MetalMaterial(new ConstantTexture(Spectrum(0.8, 0.8, 0.8)), 1.0));
 	scene.materials.emplace_back(new DielectricMaterial(2.5));
-	scene.materials.emplace_back(new DielectricMaterial(1.2));
+    scene.materials.emplace_back(new DielectricMaterial(1.2));
+	scene.materials.emplace_back(new IsotropicMaterial(new ConstantTexture(Spectrum(1.0))));
+    scene.materials.emplace_back(new IsotropicMaterial(new ConstantTexture(Spectrum(0.0))));
 
-	scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(Spectrum(10.f, 10.f, 10.f))));
+	//scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(Spectrum(10.f, 10.f, 10.f))));
+    // Dim light
+    scene.materials.emplace_back(new DiffuseLight(new ConstantTexture(Spectrum(0.9f, 0.9f, 0.9f))));
 
 	// Room
 	float roomWidth = 5;
@@ -461,13 +458,13 @@ void InitCornellBoxMCIntegration(Scene& scene)
 	Hitable* box1 = new Translate(new RotateY(
 		new Box(vec3(-1.5, 0, -1.2), vec3(1.5, box1Height, 1.2), 1), 
 		-30), // angle
-		vec3(2, 0, 0));
+		vec3(2.5, 0, 0));
 
 	float box2Height = 2.5;
 	Hitable* box2 = new Translate(new RotateY(
 		new Box(vec3(-(box2Height/2), 0, -(box2Height/2)), vec3((box2Height/2), box2Height, (box2Height/2)), 1),
 		20), // angle 
-		vec3(-2, 0, 1.5));
+		vec3(-2.5, 0, 1.5));
 	
 	Hitable* sphere = 
 		// new Box(vec3(-5, 0, -5), vec3(5, 5, 5), 6),
@@ -476,14 +473,31 @@ void InitCornellBoxMCIntegration(Scene& scene)
 	//Hitable* triange = new Triangle(vec3(-1.5, 0, -1.5), vec3(1.5, 0, -1.5), vec3(0, 5, -1.5), 2);
 	//scene.objects.emplace_back(triange);
 	//Hitable* mesh = new mi::Mesh("../data/models/gltf/Duck/glTF/Duck.gltf", 1);
-	Hitable* mesh = new Translate(
-		new mi::Mesh("../data/models/gltf/Cube/glTF/Cube.gltf", 1),
-		vec3(1, 1, 0));
-	//Hitable* mesh = new mi::Mesh("../data/pbrt-v3-pbf/head.pbf", 3);
+	//Hitable* mesh = new Translate(
+	//	new mi::Mesh("../data/models/gltf/Cube/glTF/Cube.gltf", 1),
+	//	vec3(1, 1, 0));
+	//Hitable* mesh = new mi::Mesh("../data/pbrt-v3-pbf/head/head.pbf", 3);
+    //Hitable* mesh = new mi::Mesh("../data/pbrt-v3-pbf/pbrt-book/book.pbf", 3);
     //scene.objects.emplace_back(mesh);
 
+    ConstantMedium* constantMedium1 = new ConstantMedium(
+        box1,
+        0.1f,
+        new ConstantTexture(Spectrum(0.1, 0.2, 0.9)),
+        9);
+    scene.objects.emplace_back(constantMedium1);
+    
+    ConstantMedium* constantMedium2 = new ConstantMedium(
+        box2,
+        0.1f,
+        new ConstantTexture(Spectrum(0.1, 0.2, 0.9)),
+        10);
+    scene.objects.emplace_back(constantMedium2);
+    
 	// Light
-	Hitable* ceilingLight = new FlipNormal(new RectXZ(vec2(-1, -1), vec2(1, 1), roomWidth * 2 - 0.01f, scene.materials.size() - 1));
+	//Hitable* ceilingLight = new FlipNormal(new RectXZ(vec2(-1, -1), vec2(1, 1), roomWidth * 2 - 0.01f, scene.materials.size() - 1));
+    // Larger light
+    Hitable* ceilingLight = new FlipNormal(new RectXZ(vec2(-3, -3), vec2(3, 3), roomWidth * 2 - 0.01f, scene.materials.size() - 1));
 	scene.objects.emplace_back(ceilingLight);
 	scene.lights.emplace_back(ceilingLight);
 
@@ -491,6 +505,32 @@ void InitCornellBoxMCIntegration(Scene& scene)
 	// scene.objects.emplace_back(box2);
 	// scene.objects.emplace_back(sphere);
 	
+}
+
+void InitPBRTScene(Scene& scene)
+{
+	g_settings.nx = 400;
+	g_settings.ny = 400;
+	g_settings.numSamplesPerPixel = 140;
+	g_settings.lookFrom = vec3(0, 5, 14.9);
+	g_settings.lookAt = vec3(0, 5, -1);
+	g_settings.vfov = 60;
+	g_settings.aspect = float(g_settings.nx) / float(g_settings.ny);
+	g_settings.aperture = 0.01f;
+	g_settings.focusDist = length(g_settings.lookAt - g_settings.lookFrom);
+
+    scene.materials.emplace_back(
+        new LambertianMaterial(
+            new CheckerTexture(
+                new ConstantTexture(Spectrum(0.2, 0.3, 0.7)),
+                new ConstantTexture(Spectrum(0.8, 0.8, 0.8))
+            )
+        ));
+    
+    //GridDensityMedium* medium = GridDensityMedium::LoadFromFile("../data/pbrt-v3-scenes/cloud/geometry/density_render.70.pbrt");
+    
+    //medium = new GridDensityMedium(Spectrum(0.1f), Spectrum(1.0f), 0.5, 5, 5, 5, d);
+    
 }
 
 int main()
@@ -506,6 +546,7 @@ int main()
 	// InitUniverseScene(scene);
 	// InitCornellBox(scene);
 	InitCornellBoxMCIntegration(scene);
+	//InitPBRTScene(scene);
 	scene.BuildAccelerationStructure();
 	RenderFullscreen(scene);
     

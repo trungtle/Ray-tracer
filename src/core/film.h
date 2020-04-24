@@ -1,6 +1,7 @@
 #ifndef FILM_H
 #define FILM_H
 
+#include <fstream>
 #include <memory>
 #include <string>
 

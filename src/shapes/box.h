@@ -4,9 +4,9 @@
 #include <iostream>
 #include <glm/glm.hpp>
 
+#include "core/scene.h"
 #include "shapes/hitable_transform.h"
 #include "shapes/rectangle.h"
-#include "shapes/scene.h"
 
 using namespace glm;
 using namespace std;

@@ -94,7 +94,7 @@ void mi::Mesh::LoadFromFile(const std::string& file)
 		pbrt::Scene::loadFrom(file);
 
 		// DEBUG
-		cout << "Loaded file " << file << endl;
+		cout << "Loading file " << file << endl;
 		cout << "Scene: " << endl;
 
 		for (pbrt::Shape::SP shape : scene->world->shapes)
@@ -112,7 +112,7 @@ void mi::Mesh::LoadFromFile(const std::string& file)
 			for (auto n : triangleMesh->normal)
 			{
 				glm::vec3 nor(n.x, n.y, n.z);
-				m_positions.push_back(nor);
+				m_normals.push_back(nor);
 			}
 
 			for (int tri = 0; tri < triangleMesh->index.size(); tri++)

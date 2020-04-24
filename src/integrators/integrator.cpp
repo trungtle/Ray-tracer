@@ -5,12 +5,11 @@
 #include <iostream>
 #include <tbb/tbb.h>
 
-#include "camera/camera.h"
+#include "core/scene.h"
 #include "materials/material.h"
 #include "ray/ray.h"
 #include "samplers/pdf.h"
 #include "samplers/sampler.h"
-#include "shapes/scene.h"
 #include "screen/screen.h"
 
 #define PARALLEL 1
@@ -31,10 +30,9 @@ public:
          Spectrum sum = _sumColor;
          size_t end = range.end();
 
-         uint32_t depth = 50;
          for (size_t i = range.begin(); i != end; i++)
          {
-             Spectrum li = m_integrator->Li(*m_scene, m_ray, depth);
+             Spectrum li = m_integrator->Li(*m_scene, m_ray);
              li.DeNaN();
              sum += li;
          }
@@ -66,7 +64,7 @@ public:
 };
 
 
-void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
+void Integrator::Render(Scene& scene, uint32_t numSamplesPerPixel)
 {
 #if REPORT
     auto start = chrono::steady_clock::now();
@@ -83,7 +81,7 @@ void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
 				{
                     vec2 uv = Sampler::RandomSampleFromPixel(x, y, m_screen->width, m_screen->height);
                     
-                    Ray ray = m_camera->GetRay(uv);
+                    Ray ray = scene.camera->GetRay(uv);
                     
 					SumColor sumColor(
 						this,
@@ -96,7 +94,7 @@ void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
 
 					// Gamma correction
                     color = Sqrt(color);
-                    m_camera->film->SetPixel(color, x, y);
+                    scene.camera->film->SetPixel(color, x, y);
 				}
 			}
 		});
@@ -110,8 +108,8 @@ void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
 			for (int n = 0; n < numSamplesPerPixel; n++)
 			{
 				vec2 uv = Sampler::RandomSampleFromPixel(x, y, m_screen->width, m_screen->height);
-				Ray r = m_camera->GetRay(uv);
-                Spectrum li = Li(scene, r, 50);
+				Ray r = scene.camera->GetRay(uv);
+                Spectrum li = Li(scene, r);
                 li.DeNaN();
                 color += li;
 			}
@@ -120,7 +118,7 @@ void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
 
 			// Gamma correction
             color = Sqrt(color);
-            m_camera->film->SetPixel(color, x, y);
+            scene.camera->film->SetPixel(color, x, y);
 		}
 	}
 
@@ -131,11 +129,11 @@ void Integrator::Render(const Scene& scene, uint32_t numSamplesPerPixel)
 #endif
 
     // Output to file
-    m_camera->film->WriteImage();
+    scene.camera->film->WriteImage();
 }
 
 
-Spectrum Integrator::Li(const Scene& scene, const Ray& r, int maxDepth) const
+Spectrum Integrator::Li(const Scene& scene, const Ray& r) const
 {
     uint32_t depth = 0;
     Ray scatterRay = r;
@@ -195,6 +193,19 @@ Spectrum Integrator::Li(const Scene& scene, const Ray& r, int maxDepth) const
                     }
                     case Material::kDielectric:
                     {
+                        break;
+                    }
+                    case Material::kIsotropic:
+                    {
+                        Spectrum albedo = material->texture->value(intersect.UV, intersect.P);
+                        if (depth == 0)
+                        {
+                            accColor = albedo;
+                        }
+                        else
+                        {
+                            accColor = accColor * albedo;
+                        }
                         break;
                     }
                     default:

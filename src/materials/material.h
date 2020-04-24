@@ -51,6 +51,7 @@ public:
 		kDiffuse,
 		kMetal,
 		kDielectric,
+        kIsotropic,
 		kLight
 	};
 
@@ -168,15 +169,17 @@ public:
 class IsotropicMaterial : public Material
 {
 public:
-	IsotropicMaterial(Texture* albedo) : m_albedo(albedo) {}
+	IsotropicMaterial(Texture* albedo)
+    {
+        texture = albedo;
+        type = kIsotropic;
+    }
 
 	virtual bool Scatter(const Ray& ray, const Interaction& intersect, Ray& scatterRay) const override
 	{
 		scatterRay = Ray(intersect.P, Sampler::RandomSampleInUnitSphere());
 		return true;
 	}
-
-	Texture* m_albedo;
 };
 
 #endif

@@ -1,11 +1,14 @@
 #ifndef MEDIUM_H
 #define MEDIUM_H
 
+#include <fstream>
 #include <memory>
+#include <string>
 
 #include <glm/glm.hpp>
 
 #include "materials/material.h"
+#include "memory/memory_arena.h"
 #include "shapes/Intersection.h"
 #include "samplers/sampler.h"
 #include "textures/texture.h"
@@ -25,7 +28,7 @@ public:
     virtual ~Medium() {}
     virtual Spectrum Tr(const Ray& ray, Sampler& sampler) const = 0;
     virtual Spectrum Sample(const Ray& ray, Sampler& sampler,
-                            /*MemoryArena& arena,*/
+                            MemoryArena& arena,
                             MediumInteraction* mi) const = 0;
 };
 
@@ -34,17 +37,66 @@ class ConstantMedium : public Hitable
 {
 public:
 	ConstantMedium(
-		Hitable* boundary, 
+		Hitable* boundary,
 		float density, 
-		Texture* albedo)
+		Texture* albedo,
+        int matId)
+    : m_pBoundary(boundary), m_negInvDensity(-1 / density)
 	{
-		m_phaseFunction = new IsotropicMaterial(albedo);
+        materialId = matId;
+        m_phaseFunction = std::make_shared<IsotropicMaterial>(albedo);
 
 	}
 
-	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& intersect) const
+	virtual bool Hit(const Ray& ray, float tmin, float tmax, Interaction& interaction) const
 	{
-		return false;
+        const bool enableDebug = false;
+        const bool debugging = enableDebug && Sampler::Random01() < 0.0001f;
+
+        Interaction interact1, interact2;
+        
+        if (!m_pBoundary->Hit(ray, -INFINITY, INFINITY, interact1))
+        {
+            return false;
+        }
+        
+        if (!m_pBoundary->Hit(ray, interact1.t + 0.0001, INFINITY, interact2))
+        {
+            return false;
+        }
+        
+        if (debugging) std::cerr << "\nt0=" << interact1.t << ", t1=" << interact2.t << "\n";
+        
+        if (interact1.t < tmin) interact1.t = tmin;
+        if (interact2.t > tmax) interact2.t = tmax;
+        
+        if (interact1.t >= interact2.t)
+        {
+            return false;
+        }
+        
+        if (interact1.t < 0) interact1.t = 0;
+        
+        const auto rayLength = ray.direction.length();
+        const auto distanceInsideBoundary = (interact2.t - interact1.t) * rayLength;
+        const auto hitDistance = m_negInvDensity * log(Sampler::Random01());
+        
+        if (hitDistance > distanceInsideBoundary)
+            return false;
+        
+        interaction.t = interact1.t + hitDistance / rayLength;
+        interaction.P = ray(interaction.t);
+        
+        if (debugging)
+        {
+            std::cerr << "Hit distance = " << hitDistance << "\n" << "rect.t = " << interaction.t << "\n" << "rect.P = " << interaction.P.x << ", " << interaction.P.y << ", " << interaction.P.z << std::endl;
+        }
+        
+        interaction.N = glm::vec3(1, 0, 0); // Arbitrary
+        interaction.UV = glm::vec2(0, 0); // Arbitrary
+        interaction.hit = this;
+        
+		return true;
 	}
 
 	virtual bool BoundingBox(AABB& aabb) const
@@ -54,8 +106,8 @@ public:
 
 
 	Hitable* m_pBoundary;
-	float m_density;
-	Material* m_phaseFunction;
+	float m_negInvDensity;
+    std::shared_ptr<Material> m_phaseFunction;
 
 };
 
@@ -63,6 +115,31 @@ public:
 class GridDensityMedium : public Medium
 {
 public:
+    static GridDensityMedium* LoadFromFile(const std::string& filename)
+    {
+        GridDensityMedium* retMedium;
+        
+        int nx, ny, nz;
+        
+        std::ifstream file(filename);
+        
+        if (file.is_open())
+        {
+            std::string line;
+            while(std::getline(file, line))
+            {
+                //std::find
+                //std::quoted
+                std::cout << line << std::endl;
+            }
+        }
+        
+        file.close();
+        
+        return nullptr;
+    }
+
+
     /**
      * sigma_a : absorption
      * sigma_s : scattering
@@ -120,7 +197,7 @@ public:
     }
     
     virtual Spectrum Sample(const Ray& ray, Sampler& sampler,
-                            /*MemoryArena& arena,*/
+                            MemoryArena& arena,
                             MediumInteraction* mi) const override
     {
         return Spectrum(0.);

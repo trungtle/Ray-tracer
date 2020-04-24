@@ -15,21 +15,24 @@ class SumColor;
 class Integrator
 {
 	friend class SumColor;
-	std::shared_ptr<const Camera> m_camera;
 	std::shared_ptr<const Screen> m_screen;
 
 public:
 	Integrator(
-		std::shared_ptr<const Camera> camera,
-		std::shared_ptr<const Screen> screen) :
-			m_camera(camera),
-			m_screen(screen) {}
+		std::shared_ptr<const Screen> screen, 
+		int maxDepth = 50) :
+			m_screen(screen), 
+			maxDepth(maxDepth) 
+		{}
 
 
-	void Render(const Scene& scene, uint32_t numSamplesPerPixel);
+	void Render(Scene& scene, uint32_t numSamplesPerPixel);
 
 
-	Spectrum Li(const Scene& scene, const Ray& r, int maxDepth) const;
+protected:
+	Spectrum Li(const Scene& scene, const Ray& r) const;
+
+	int maxDepth;
 };
 
 #endif

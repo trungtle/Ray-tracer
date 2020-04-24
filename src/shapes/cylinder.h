@@ -3,10 +3,10 @@
 
 #include <iostream>
 
+#include "core/scene.h"
 #include "shapes/disk.h"
 #include "shapes/hitable_transform.h"
 #include "shapes/Intersection.h"
-#include "shapes/scene.h"
 
 using namespace glm;
 using namespace std;
