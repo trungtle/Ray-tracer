@@ -49,11 +49,11 @@ Assortments of ray-objects intersection, with 2 different lighting scenarios:
 
 # Uniform sampling
 
-![Render](images/Sampling_Uniform_100sp.jpg "Uniform sampling")
+![Render](images/Sampling_Uniform_100sp.png "Uniform sampling")
 
 # Homogeneous media
 
-![Render](images/homogeneous_media.jpg "Homogeneous media")
+![Render](images/homogeneous_media.png "Homogeneous media")
 
 
 # Credit:
